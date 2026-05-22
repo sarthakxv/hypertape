@@ -6,7 +6,7 @@
 
 **Architecture:** Use a Next.js App Router app with TypeScript and Vitest. Keep market data behind a provider boundary so deterministic fixtures and live Hyperliquid calls return the same normalized models. Build core calculations and tape logic with TDD before rendering UI.
 
-**Tech Stack:** Next.js, React, TypeScript, Vitest, Testing Library, Recharts, localStorage, Hyperliquid HTTP API.
+**Tech Stack:** Next.js, React, TypeScript, Vitest, Testing Library, Lightweight Charts, localStorage, Hyperliquid HTTP API.
 
 ---
 
@@ -33,6 +33,7 @@
 - Create `components/markets/watchlist-star.tsx`: local watchlist toggle.
 - Create `components/markets/watchlist-sidebar.tsx`: homepage watchlist.
 - Create `components/markets/market-detail.tsx`: detail page sections.
+- Create `components/charts/probability-chart.tsx`: client-only probability time-series chart.
 - Create `components/alerts/alerts-panel.tsx`: alert preset/draft UI.
 - Create `lib/hyperliquid/types.ts`: normalized domain types.
 - Create `lib/hyperliquid/asset-encoding.ts`: HIP-4 asset encoding.
@@ -84,7 +85,7 @@ Create `package.json`:
     "next": "^15.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "recharts": "^2.15.0",
+    "lightweight-charts": "^5.2.0",
     "lucide-react": "^0.468.0"
   },
   "devDependencies": {
@@ -1484,6 +1485,7 @@ git commit -m "feat: build homepage and markets table"
 
 **Files:**
 - Create: `components/markets/market-detail.tsx`
+- Create: `components/charts/probability-chart.tsx`
 - Create: `components/alerts/alerts-panel.tsx`
 - Create: `app/markets/[marketId]/page.tsx`
 - Create: `app/alerts/page.tsx`
@@ -1494,12 +1496,21 @@ Create `components/markets/market-detail.tsx` to render:
 
 - Market header with name, outcome ID, quote token, expiry, and status.
 - Current primary and dual probabilities.
-- Recharts line chart for primary probability history.
+- Client-only Lightweight Charts area chart for primary probability history.
 - Canonical book levels from latest snapshot.
 - Depth summary for 1, 3, and 5 point bands.
 - Market-scoped tape events.
 - Local alert draft controls with Telegram marked disabled.
 - Collapsed raw metadata JSON.
+
+Create `components/charts/probability-chart.tsx` as a client component that:
+
+- Creates the chart in a `useEffect` with `createChart`.
+- Uses `AreaSeries` for primary-side probability history.
+- Converts snapshot timestamps to Lightweight Charts time values.
+- Cleans up the chart instance on unmount.
+- Calls `timeScale().fitContent()` after setting data.
+- Includes TradingView attribution in the chart footer because Lightweight Charts requires it.
 
 Create `app/markets/[marketId]/page.tsx`:
 
@@ -1569,7 +1580,7 @@ Expected: all tests pass, typecheck succeeds, Next.js production build succeeds.
 Run:
 
 ```bash
-git add components/markets/market-detail.tsx components/alerts/alerts-panel.tsx app/markets/'[marketId]'/page.tsx app/alerts/page.tsx
+git add components/markets/market-detail.tsx components/charts/probability-chart.tsx components/alerts/alerts-panel.tsx app/markets/'[marketId]'/page.tsx app/alerts/page.tsx
 git commit -m "feat: add market detail and alerts pages"
 ```
 
@@ -1584,6 +1595,7 @@ git commit -m "feat: add market detail and alerts pages"
 - Modify: `components/markets/markets-table.tsx`
 - Modify: `components/markets/watchlist-sidebar.tsx`
 - Modify: `components/markets/market-detail.tsx`
+- Modify: `components/charts/probability-chart.tsx`
 - Modify: `components/alerts/alerts-panel.tsx`
 
 - [ ] **Step 1: Start dev server**
