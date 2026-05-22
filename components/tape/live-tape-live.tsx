@@ -1,6 +1,5 @@
 "use client";
 
-import { useRef } from "react";
 import { LiveTape } from "@/components/tape/live-tape";
 import { useLiveData } from "@/lib/hooks/use-live-data";
 import type { TapeEvent } from "@/lib/hyperliquid/types";
@@ -18,13 +17,13 @@ type LiveTapeLiveProps = {
 };
 
 export function LiveTapeLive({ events }: LiveTapeLiveProps) {
-  const lastGoodRef = useRef<TapeEvent[]>(events);
-  const payload = useLiveData<TapeResponse>("/api/tape", { source: "live", events }, LIVE_REFRESH_MS);
+  // Reject error envelopes that arrive with no events; the hook keeps last good.
+  const payload = useLiveData<TapeResponse>(
+    "/api/tape",
+    { source: "live", events },
+    LIVE_REFRESH_MS,
+    (p) => !(p.error && p.events.length === 0)
+  );
 
-  // Ignore error envelopes that arrive with no events; keep the last good feed.
-  if (!(payload.error && payload.events.length === 0)) {
-    lastGoodRef.current = payload.events;
-  }
-
-  return <LiveTape events={lastGoodRef.current} />;
+  return <LiveTape events={payload.events} />;
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import { useRef } from "react";
 import { MarketDetail } from "@/components/markets/market-detail";
 import { useLiveData } from "@/lib/hooks/use-live-data";
 import type { Market, MarketSnapshot, TapeEvent } from "@/lib/hyperliquid/types";
@@ -23,23 +22,19 @@ type MarketDetailLiveProps = {
 };
 
 export function MarketDetailLive({ market, snapshots, events, sourceLabel }: MarketDetailLiveProps) {
-  const lastGoodRef = useRef<{ snapshots: MarketSnapshot[]; events: TapeEvent[] }>({ snapshots, events });
+  // Reject error envelopes that arrive without a market; the hook keeps last good.
   const payload = useLiveData<MarketDetailResponse>(
     `/api/markets/${market.id}`,
     { source: "live", market, snapshots, events },
-    LIVE_REFRESH_MS
+    LIVE_REFRESH_MS,
+    (p) => !(p.error && !p.market)
   );
-
-  // Ignore error envelopes that arrive without a market; keep the last good detail.
-  if (payload.market && !(payload.error && payload.snapshots.length === 0)) {
-    lastGoodRef.current = { snapshots: payload.snapshots, events: payload.events };
-  }
 
   return (
     <MarketDetail
       market={payload.market ?? market}
-      snapshots={lastGoodRef.current.snapshots}
-      events={lastGoodRef.current.events}
+      snapshots={payload.snapshots}
+      events={payload.events}
       sourceLabel={sourceLabel}
     />
   );

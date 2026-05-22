@@ -1,6 +1,5 @@
 "use client";
 
-import { useRef } from "react";
 import { MarketsTable } from "@/components/markets/markets-table";
 import { useLiveData } from "@/lib/hooks/use-live-data";
 import type { Market, MarketSnapshot, TapeEvent } from "@/lib/hyperliquid/types";
@@ -21,31 +20,25 @@ type MarketsTableLiveProps = {
 };
 
 export function MarketsTableLive({ markets, snapshots, events }: MarketsTableLiveProps) {
-  const lastGoodRef = useRef<{ markets: Market[]; snapshots: MarketSnapshot[] }>({ markets, snapshots });
+  // Reject error envelopes that arrive with no markets; the hook keeps last good.
   const marketsPayload = useLiveData<MarketsResponse>(
     "/api/markets",
     { source: "live", markets, snapshots },
-    LIVE_REFRESH_MS
+    LIVE_REFRESH_MS,
+    (payload) => !(payload.error && payload.markets.length === 0)
   );
   const tapePayload = useLiveData<{ source: string; events: TapeEvent[]; error?: string }>(
     "/api/tape",
     { source: "live", events },
-    LIVE_REFRESH_MS
+    LIVE_REFRESH_MS,
+    (payload) => !(payload.error && payload.events.length === 0)
   );
-
-  // Ignore error envelopes that arrive with no markets; keep the last good table.
-  if (!(marketsPayload.error && marketsPayload.markets.length === 0)) {
-    lastGoodRef.current = { markets: marketsPayload.markets, snapshots: marketsPayload.snapshots };
-  }
-
-  const eventsForTable =
-    tapePayload.error && tapePayload.events.length === 0 ? events : tapePayload.events;
 
   return (
     <MarketsTable
-      markets={lastGoodRef.current.markets}
-      snapshots={lastGoodRef.current.snapshots}
-      events={eventsForTable}
+      markets={marketsPayload.markets}
+      snapshots={marketsPayload.snapshots}
+      events={tapePayload.events}
     />
   );
 }

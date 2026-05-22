@@ -68,6 +68,37 @@ describe("useLiveData", () => {
     expect(result.current).toEqual({ value: 7 });
   });
 
+  test("retains the last good data when a payload fails the isValid predicate", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ value: 7 }) })
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ value: -1 }) })
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ value: 9 }) });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const isValid = (payload: Payload) => payload.value >= 0;
+    const { result } = renderHook(() =>
+      useLiveData<Payload>("/api/x", { value: 1 }, interval, isValid)
+    );
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(interval);
+    });
+    expect(result.current).toEqual({ value: 7 });
+
+    // Invalid payload must not replace the current data.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(interval);
+    });
+    expect(result.current).toEqual({ value: 7 });
+
+    // A subsequent valid payload does update.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(interval);
+    });
+    expect(result.current).toEqual({ value: 9 });
+  });
+
   test("stops polling after unmount", async () => {
     const fetchMock = mockFetchOk({ value: 42 });
     vi.stubGlobal("fetch", fetchMock);

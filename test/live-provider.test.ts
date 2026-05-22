@@ -97,6 +97,26 @@ describe("live market data provider", () => {
     expect(marketIds.size).toBe(markets.length);
   });
 
+  test("getSnapshots() drops a market whose book fetch rejects and keeps the survivors", async () => {
+    // "#800" is the primary coin for market 80; rejecting it drops that one market.
+    const provider = createProvider({
+      async fetchL2Book(coin: string): Promise<L2Book> {
+        if (coin === "#800") {
+          throw new Error("book fetch failed");
+        }
+        return l2BookFor(coin);
+      }
+    });
+
+    const markets = await provider.getMarkets();
+    expect(markets.length).toBeGreaterThan(1);
+
+    const snapshots = await provider.getSnapshots();
+
+    expect(snapshots).toHaveLength(markets.length - 1);
+    expect(snapshots.some((snapshot) => snapshot.marketId === "80")).toBe(false);
+  });
+
   test("getTapeEvents(id) derives probability_move events from a qualifying candle history", async () => {
     const base = 1779481020000;
     const syntheticCandles: Candle[] = [

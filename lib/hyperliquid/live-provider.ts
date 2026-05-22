@@ -181,10 +181,16 @@ export function createLiveMarketDataProvider(options: LiveProviderOptions = {}):
 
     const markets = await getMarkets();
     const allMids = await fetchAllMidsCached();
-    return mapWithConcurrency(markets, FAN_OUT_LIMIT, async (market) => {
-      const primaryBook = await fetchL2BookCached(primaryCoin(market));
-      return buildCurrentSnapshot(market, primaryBook, allMids);
+    const results = await mapWithConcurrency(markets, FAN_OUT_LIMIT, async (market) => {
+      try {
+        const primaryBook = await fetchL2BookCached(primaryCoin(market));
+        return buildCurrentSnapshot(market, primaryBook, allMids);
+      } catch {
+        // Isolate per-market failures so one bad market does not blank the list.
+        return null;
+      }
     });
+    return results.filter((snapshot): snapshot is MarketSnapshot => snapshot !== null);
   }
 
   async function getTapeEventsForMarket(market: Market): Promise<TapeEvent[]> {
@@ -204,9 +210,14 @@ export function createLiveMarketDataProvider(options: LiveProviderOptions = {}):
     }
 
     const markets = await getMarkets();
-    const perMarket = await mapWithConcurrency(markets, FAN_OUT_LIMIT, (market) =>
-      getTapeEventsForMarket(market)
-    );
+    const perMarket = await mapWithConcurrency(markets, FAN_OUT_LIMIT, async (market) => {
+      try {
+        return await getTapeEventsForMarket(market);
+      } catch {
+        // Isolate per-market failures so one bad market does not blank the feed.
+        return [];
+      }
+    });
 
     return rankTapeEvents(perMarket.flat());
   }
