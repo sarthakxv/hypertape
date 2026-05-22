@@ -108,6 +108,21 @@ describe("tape event engine", () => {
     expect(events[0]?.side).toBe("No");
   });
 
+  test("measures the move within the trailing window even when older snapshots exist", () => {
+    const events = generateProbabilityMoveEvents(
+      [market],
+      [snapshot(0, 0.99), snapshot(200_000, 0.42), snapshot(400_000, 0.478)],
+      5 * 60
+    );
+
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      previousProbability: 0.42,
+      currentProbability: 0.478,
+      severity: "medium"
+    });
+  });
+
   test("ranks higher severity and larger deltas first", () => {
     const ranked = rankTapeEvents([
       { id: "a", marketId: "7", timestamp: 10, eventType: "probability_move", severity: "low", delta: 0.03, title: "a", summary: "a" },

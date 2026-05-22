@@ -58,9 +58,10 @@ export function generateProbabilityMoveEvents(
     const market = marketsById.get(marketId);
     if (!market || marketSnapshots.length < 2) continue;
 
-    const previousSnapshot = marketSnapshots[0];
     const currentSnapshot = marketSnapshots[marketSnapshots.length - 1];
-    if (currentSnapshot.timestamp - previousSnapshot.timestamp > windowSeconds * 1000) continue;
+    const windowStart = currentSnapshot.timestamp - windowSeconds * 1000;
+    const previousSnapshot = marketSnapshots.find((candidate) => candidate.timestamp >= windowStart);
+    if (!previousSnapshot || previousSnapshot === currentSnapshot) continue;
     if (previousSnapshot.primarySide !== currentSnapshot.primarySide) continue;
     const previousMid = getPrimaryMidFromTwoSidedQuote(previousSnapshot);
     const currentMid = getPrimaryMidFromTwoSidedQuote(currentSnapshot);

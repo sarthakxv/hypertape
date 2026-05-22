@@ -95,8 +95,7 @@ export function MarketsTable({ markets, snapshots, events }: MarketsTableProps) 
           <tbody>
             {orderedMarkets.map((market) => {
               const snapshot = latestSnapshots.get(market.id);
-              const latestEvent = latestEvents.get(market.id);
-              const fiveMinuteDelta = eventDelta(events, market.id, 300) ?? (latestEvent?.delta == null ? null : latestEvent.delta * 100);
+              const fiveMinuteDelta = eventDelta(events, market.id, 300);
               const fifteenMinuteDelta = eventDelta(events, market.id, 900);
 
               return (
