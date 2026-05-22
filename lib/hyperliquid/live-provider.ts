@@ -9,9 +9,13 @@ import {
   type L2BookLevel,
   type TtlCache
 } from "./hyperliquid-client";
-import { normalizeOutcomeMeta } from "./normalize-outcome-meta";
+import { buildMarketsFromOutcomeMeta } from "./normalize-outcome-meta";
 import type { MarketDataProvider } from "./provider";
-import type { BookLevel, Market, MarketSnapshot, TapeEvent } from "./types";
+import type { BookLevel, Market, MarketCard, MarketSnapshot, TapeEvent } from "./types";
+
+function binaryMarkets(cards: MarketCard[]): Market[] {
+  return cards.filter((card): card is Market => card.kind === "binary");
+}
 import { calculateMid, calculateSpread } from "@/lib/markets/probability";
 import { depthWithinPoints } from "@/lib/markets/depth";
 import { generateProbabilityMoveEvents, rankTapeEvents } from "@/lib/tape/event-engine";
@@ -148,13 +152,13 @@ export function createLiveMarketDataProvider(options: LiveProviderOptions = {}):
     });
   }
 
-  async function getMarkets(): Promise<Market[]> {
+  async function getMarkets(): Promise<MarketCard[]> {
     const timestamp = now();
-    const meta = await client.fetchOutcomeMeta();
-    return meta.outcomes.map((outcome) => normalizeOutcomeMeta(outcome, timestamp));
+    const [meta, allMids] = await Promise.all([client.fetchOutcomeMeta(), fetchAllMidsCached()]);
+    return buildMarketsFromOutcomeMeta(meta, allMids, timestamp);
   }
 
-  async function getMarket(marketId: string): Promise<Market | null> {
+  async function getMarket(marketId: string): Promise<MarketCard | null> {
     const markets = await getMarkets();
     return markets.find((market) => market.id === marketId) ?? null;
   }
@@ -175,11 +179,12 @@ export function createLiveMarketDataProvider(options: LiveProviderOptions = {}):
   async function getSnapshots(marketId?: string): Promise<MarketSnapshot[]> {
     if (marketId != null) {
       const market = await getMarket(marketId);
-      if (!market) return [];
+      // Bucket markets carry their probabilities inline; they have no book history.
+      if (!market || market.kind !== "binary") return [];
       return getSnapshotsForMarket(market);
     }
 
-    const markets = await getMarkets();
+    const markets = binaryMarkets(await getMarkets());
     const allMids = await fetchAllMidsCached();
     const results = await mapWithConcurrency(markets, FAN_OUT_LIMIT, async (market) => {
       try {
@@ -205,11 +210,11 @@ export function createLiveMarketDataProvider(options: LiveProviderOptions = {}):
   async function getTapeEvents(marketId?: string): Promise<TapeEvent[]> {
     if (marketId != null) {
       const market = await getMarket(marketId);
-      if (!market) return [];
+      if (!market || market.kind !== "binary") return [];
       return rankTapeEvents(await getTapeEventsForMarket(market));
     }
 
-    const markets = await getMarkets();
+    const markets = binaryMarkets(await getMarkets());
     const perMarket = await mapWithConcurrency(markets, FAN_OUT_LIMIT, async (market) => {
       try {
         return await getTapeEventsForMarket(market);

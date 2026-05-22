@@ -3,6 +3,7 @@ import { generateProbabilityMoveEvents, rankTapeEvents } from "@/lib/tape/event-
 import type { Market, MarketSnapshot } from "@/lib/hyperliquid/types";
 
 const market = {
+  kind: "binary",
   id: "7",
   outcomeId: 7,
   name: "BTC above 105k by 06:00 UTC",

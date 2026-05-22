@@ -49,13 +49,33 @@ function createProvider(overrides: FakeClientOverrides = {}) {
 }
 
 describe("live market data provider", () => {
-  test("getMarkets returns normalized markets keyed by outcome id", async () => {
+  test("getMarkets models binary outcomes and bucket questions like outcome.xyz", async () => {
     const provider = createProvider();
     const markets = await provider.getMarkets();
 
-    expect(markets.length).toBeGreaterThan(0);
-    expect(markets.map((market) => market.id)).toContain("80");
     expect(provider.source).toBe("live");
+
+    const binary80 = markets.find((market) => market.id === "80");
+    expect(binary80?.kind).toBe("binary");
+    expect(binary80?.name).toBe("Bitcoin Up or Down Daily");
+
+    // Fallback outcome 81 is hidden; named outcomes 82-84 are folded into the bucket.
+    const ids = markets.map((market) => market.id);
+    expect(ids).not.toContain("81");
+    expect(ids).not.toContain("82");
+
+    const bucket = markets.find((market) => market.kind === "bucket");
+    expect(bucket).toBeDefined();
+    if (bucket?.kind === "bucket") {
+      expect(bucket.id).toBe("q15");
+      expect(bucket.name).toBe("Bitcoin Multi Outcomes Daily");
+      expect(bucket.legs.map((leg) => leg.label)).toEqual([
+        "< $75,902",
+        "$75,902–$79,000",
+        "> $79,000"
+      ]);
+      expect(bucket.legs[0].probability).toBeCloseTo(0.62835, 5);
+    }
   });
 
   test("getSnapshots(id) returns candle history points plus a live current snapshot", async () => {
@@ -87,17 +107,24 @@ describe("live market data provider", () => {
     expect(current.lastBookUpdateAt).toBe((l2book800 as L2Book).time);
   });
 
-  test("getSnapshots() returns one current snapshot per market without throwing", async () => {
+  test("getSnapshots() returns one current snapshot per binary market without throwing", async () => {
     const provider = createProvider();
     const markets = await provider.getMarkets();
+    const binaryCount = markets.filter((market) => market.kind === "binary").length;
     const snapshots = await provider.getSnapshots();
 
-    expect(snapshots).toHaveLength(markets.length);
+    expect(snapshots).toHaveLength(binaryCount);
     const marketIds = new Set(snapshots.map((snapshot) => snapshot.marketId));
-    expect(marketIds.size).toBe(markets.length);
+    expect(marketIds.size).toBe(binaryCount);
   });
 
-  test("getSnapshots() drops a market whose book fetch rejects and keeps the survivors", async () => {
+  test("getSnapshots(bucketId) returns no snapshots", async () => {
+    const provider = createProvider();
+    const snapshots = await provider.getSnapshots("q15");
+    expect(snapshots).toHaveLength(0);
+  });
+
+  test("getSnapshots() drops a binary market whose book fetch rejects and keeps survivors", async () => {
     // "#800" is the primary coin for market 80; rejecting it drops that one market.
     const provider = createProvider({
       async fetchL2Book(coin: string): Promise<L2Book> {
@@ -109,11 +136,11 @@ describe("live market data provider", () => {
     });
 
     const markets = await provider.getMarkets();
-    expect(markets.length).toBeGreaterThan(1);
+    const binaryCount = markets.filter((market) => market.kind === "binary").length;
 
     const snapshots = await provider.getSnapshots();
 
-    expect(snapshots).toHaveLength(markets.length - 1);
+    expect(snapshots).toHaveLength(binaryCount - 1);
     expect(snapshots.some((snapshot) => snapshot.marketId === "80")).toBe(false);
   });
 

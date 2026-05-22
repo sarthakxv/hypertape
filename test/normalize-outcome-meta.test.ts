@@ -15,15 +15,16 @@ describe("outcome meta normalization", () => {
 
     const market = normalizeOutcomeMeta(raw, NOW);
 
+    expect(market.kind).toBe("binary");
     expect(market.id).toBe("7");
     expect(market.outcomeId).toBe(7);
-    expect(market.name).toBe("BTC above 105k by 06:00 UTC");
+    expect(market.name).toBe("Bitcoin Up or Down Daily");
     expect(market.description).toBe(raw.description);
 
     expect(market.sides[0].encoding).toBe(70);
     expect(market.sides[1].encoding).toBe(71);
-    expect(market.sides[0].label).toBe("Yes");
-    expect(market.sides[1].label).toBe("No");
+    expect(market.sides[0].label).toBe("Up");
+    expect(market.sides[1].label).toBe("Down");
     expect(market.primarySide).toBe(0);
     expect(market.dualSide).toBe(1);
 

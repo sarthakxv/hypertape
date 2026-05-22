@@ -19,12 +19,16 @@ describe("market data provider selection", () => {
     const markets = await provider.getMarkets();
     expect(markets.length).toBeGreaterThan(0);
     expect(markets.map((market) => market.name)).toEqual([
-      "BTC above 105k by 06:00 UTC",
-      "HYPE closes green today",
-      "SOL above 180 by Friday close"
+      "Bitcoin Up or Down Daily",
+      "HYPE Up or Down Daily",
+      "Solana Up or Down Weekly"
     ]);
-    expect(markets[2]?.primarySide).toBe(0);
-    expect(markets[2]?.dualSide).toBe(1);
+    const third = markets[2];
+    expect(third?.kind).toBe("binary");
+    if (third?.kind === "binary") {
+      expect(third.primarySide).toBe(0);
+      expect(third.dualSide).toBe(1);
+    }
   });
 
   test("filters fixture snapshots and tape events by market id", async () => {
@@ -43,9 +47,16 @@ describe("market data provider selection", () => {
     const provider = getMarketDataProvider({ HYPERTAPE_DATA_SOURCE: "fixture" });
 
     const firstRead = await provider.getMarkets();
-    firstRead[0]!.sides[0]!.label = "Mutated";
+    const firstMarket = firstRead[0]!;
+    if (firstMarket.kind === "binary") {
+      firstMarket.sides[0]!.label = "Mutated";
+    }
 
     const secondRead = await provider.getMarkets();
-    expect(secondRead[0]!.sides[0]!.label).toBe("Yes");
+    const secondMarket = secondRead[0]!;
+    expect(secondMarket.kind).toBe("binary");
+    if (secondMarket.kind === "binary") {
+      expect(secondMarket.sides[0]!.label).toBe("Up");
+    }
   });
 });

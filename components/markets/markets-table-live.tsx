@@ -2,19 +2,19 @@
 
 import { MarketsTable } from "@/components/markets/markets-table";
 import { useLiveData } from "@/lib/hooks/use-live-data";
-import type { Market, MarketSnapshot, TapeEvent } from "@/lib/hyperliquid/types";
+import type { MarketCard, MarketSnapshot, TapeEvent } from "@/lib/hyperliquid/types";
 
 const LIVE_REFRESH_MS = 3000;
 
 type MarketsResponse = {
   source: string;
-  markets: Market[];
+  markets: MarketCard[];
   snapshots: MarketSnapshot[];
   error?: string;
 };
 
 type MarketsTableLiveProps = {
-  markets: Market[];
+  markets: MarketCard[];
   snapshots: MarketSnapshot[];
   events: TapeEvent[];
 };

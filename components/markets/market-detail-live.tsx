@@ -2,20 +2,20 @@
 
 import { MarketDetail } from "@/components/markets/market-detail";
 import { useLiveData } from "@/lib/hooks/use-live-data";
-import type { Market, MarketSnapshot, TapeEvent } from "@/lib/hyperliquid/types";
+import type { MarketCard, MarketSnapshot, TapeEvent } from "@/lib/hyperliquid/types";
 
 const LIVE_REFRESH_MS = 3000;
 
 type MarketDetailResponse = {
   source: string;
-  market: Market | null;
+  market: MarketCard | null;
   snapshots: MarketSnapshot[];
   events: TapeEvent[];
   error?: string;
 };
 
 type MarketDetailLiveProps = {
-  market: Market;
+  market: MarketCard;
   snapshots: MarketSnapshot[];
   events: TapeEvent[];
   sourceLabel: string;

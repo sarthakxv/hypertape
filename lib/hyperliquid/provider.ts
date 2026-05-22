@@ -1,11 +1,11 @@
 import { createFixtureMarketDataProvider } from "./fixture-provider";
 import { createLiveMarketDataProvider } from "./live-provider";
-import type { Market, MarketSnapshot, TapeEvent } from "./types";
+import type { MarketCard, MarketSnapshot, TapeEvent } from "./types";
 
 export type MarketDataProvider = {
   source: "fixture" | "live";
-  getMarkets(): Promise<Market[]>;
-  getMarket(marketId: string): Promise<Market | null>;
+  getMarkets(): Promise<MarketCard[]>;
+  getMarket(marketId: string): Promise<MarketCard | null>;
   getSnapshots(marketId?: string): Promise<MarketSnapshot[]>;
   getTapeEvents(marketId?: string): Promise<TapeEvent[]>;
 };

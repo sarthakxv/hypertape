@@ -1,10 +1,24 @@
-import { Bell, Clock, Database, Info, Radio, SlidersHorizontal } from "lucide-react";
+import { Bell, Clock, Database, Info, Layers, Radio, SlidersHorizontal } from "lucide-react";
 import { ProbabilityChart } from "@/components/charts/probability-chart";
 import { LiveTape } from "@/components/tape/live-tape";
-import type { BookLevel, Market, MarketSnapshot, TapeEvent } from "@/lib/hyperliquid/types";
+import type {
+  BookLevel,
+  BucketMarket,
+  Market,
+  MarketCard,
+  MarketSnapshot,
+  TapeEvent
+} from "@/lib/hyperliquid/types";
 import { formatPoints, formatProbability } from "@/lib/markets/probability";
 
 type MarketDetailProps = {
+  market: MarketCard;
+  snapshots: MarketSnapshot[];
+  events: TapeEvent[];
+  sourceLabel: string;
+};
+
+type BinaryMarketDetailProps = {
   market: Market;
   snapshots: MarketSnapshot[];
   events: TapeEvent[];
@@ -82,7 +96,76 @@ function rawMetadata(raw: unknown): string {
   }
 }
 
+function bucketLegPercent(probability: number | null): string {
+  if (probability == null) return "-";
+  return `${Math.round(probability * 100)}%`;
+}
+
+function bucketLegWidth(probability: number | null): string {
+  if (probability == null) return "0%";
+  return `${Math.max(0, Math.min(100, Math.round(probability * 100)))}%`;
+}
+
+function BucketMarketDetail({
+  market,
+  sourceLabel
+}: {
+  market: BucketMarket;
+  sourceLabel: string;
+}) {
+  return (
+    <>
+      <section className="command-header market-command-header" aria-labelledby="market-heading">
+        <div>
+          <p className="eyebrow">Market Detail</p>
+          <h1 id="market-heading">{market.name}</h1>
+          <div className="market-header-meta" aria-label="Market metadata">
+            <span>Question {market.questionId}</span>
+            <span>Underlying {market.underlying ?? "unknown"}</span>
+            <span>Period {market.period ?? "unknown"}</span>
+            <span>Expiry {formatExpiry(market.expiryTime)}</span>
+            <span className={`status-pill status-${market.status}`}>{market.status}</span>
+          </div>
+        </div>
+        <span className="source-marker">{sourceLabel}</span>
+      </section>
+
+      <section className="panel" aria-labelledby="bucket-outcomes-heading">
+        <div className="panel-heading">
+          <div>
+            <p className="eyebrow">Outcomes</p>
+            <h2 id="bucket-outcomes-heading">Bucket probabilities</h2>
+          </div>
+          <Layers size={17} aria-hidden="true" />
+        </div>
+        <ul className="bucket-outcome-list">
+          {market.legs.map((leg) => (
+            <li key={leg.outcomeId}>
+              <div className="bucket-outcome-row">
+                <span>{leg.label}</span>
+                <strong>{bucketLegPercent(leg.probability)}</strong>
+              </div>
+              <div className="bucket-outcome-bar" aria-hidden="true">
+                <span style={{ width: bucketLegWidth(leg.probability) }} />
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </>
+  );
+}
+
 export function MarketDetail({ market, snapshots, events, sourceLabel }: MarketDetailProps) {
+  if (market.kind === "bucket") {
+    return <BucketMarketDetail market={market} sourceLabel={sourceLabel} />;
+  }
+  return (
+    <BinaryMarketDetail market={market} snapshots={snapshots} events={events} sourceLabel={sourceLabel} />
+  );
+}
+
+function BinaryMarketDetail({ market, snapshots, events, sourceLabel }: BinaryMarketDetailProps) {
   const latest = latestSnapshot(snapshots);
   const primaryLabel = sideLabel(market, market.primarySide);
   const dualLabel = sideLabel(market, market.dualSide);

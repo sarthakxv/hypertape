@@ -48,7 +48,7 @@ describe("createHyperliquidClient", () => {
 
     const result = await client.fetchAllMids();
 
-    expect(result["#800"]).toBe("0.039255");
+    expect(result["#800"]).toBe((allMidsFixture as Record<string, string>)["#800"]);
     expect(lastCallBody(fetchImpl).body).toEqual({ type: "allMids" });
   });
 
