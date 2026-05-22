@@ -1,0 +1,32 @@
+import { AppShell } from "@/components/layout/app-shell";
+import { MarketsTable } from "@/components/markets/markets-table";
+import { getMarketDataProvider } from "@/lib/hyperliquid/provider";
+
+function sourceLabel(source: string): string {
+  if (source === "live") return "Source: live Hyperliquid";
+  if (source === "live-with-fixture-fallback") return "Source: fixture fallback";
+  return "Source: fixture tape";
+}
+
+export default async function MarketsPage() {
+  const provider = getMarketDataProvider(process.env);
+  const [markets, snapshots, events] = await Promise.all([
+    provider.getMarkets(),
+    provider.getSnapshots(),
+    provider.getTapeEvents()
+  ]);
+
+  return (
+    <AppShell>
+      <section className="command-header" aria-labelledby="markets-heading">
+        <div>
+          <p className="eyebrow">Markets</p>
+          <h1 id="markets-heading">HIP-4 book monitor</h1>
+        </div>
+        <span className="source-marker">{sourceLabel(provider.source)}</span>
+      </section>
+
+      <MarketsTable markets={markets} snapshots={snapshots} events={events} />
+    </AppShell>
+  );
+}
