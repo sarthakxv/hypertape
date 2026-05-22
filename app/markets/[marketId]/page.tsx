@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
-import { MarketDetail } from "@/components/markets/market-detail";
+import { MarketDetailLive } from "@/components/markets/market-detail-live";
 import { getMarketDataProvider } from "@/lib/hyperliquid/provider";
 
 type MarketPageProps = {
@@ -48,7 +48,7 @@ export default async function MarketPage({ params }: MarketPageProps) {
 
   return (
     <AppShell>
-      <MarketDetail market={market} snapshots={snapshots} events={events} sourceLabel={sourceLabel(provider.source)} />
+      <MarketDetailLive market={market} snapshots={snapshots} events={events} sourceLabel={sourceLabel(provider.source)} />
     </AppShell>
   );
 }

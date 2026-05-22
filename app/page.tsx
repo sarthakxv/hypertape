@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
-import { MarketsTable } from "@/components/markets/markets-table";
+import { MarketsTableLive } from "@/components/markets/markets-table-live";
 import { WatchlistSidebar } from "@/components/markets/watchlist-sidebar";
-import { LiveTape } from "@/components/tape/live-tape";
+import { LiveTapeLive } from "@/components/tape/live-tape-live";
 import { getMarketDataProvider } from "@/lib/hyperliquid/provider";
 import { formatPoints, formatProbability } from "@/lib/markets/probability";
 
@@ -70,8 +70,8 @@ export default async function HomePage() {
       </section>
 
       <div className="command-grid">
-        <LiveTape events={events} />
-        <MarketsTable markets={markets} snapshots={snapshots} events={events} />
+        <LiveTapeLive events={events} />
+        <MarketsTableLive markets={markets} snapshots={snapshots} events={events} />
         <WatchlistSidebar markets={markets} snapshots={snapshots} />
       </div>
     </AppShell>

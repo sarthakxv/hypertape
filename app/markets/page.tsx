@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/layout/app-shell";
-import { MarketsTable } from "@/components/markets/markets-table";
+import { MarketsTableLive } from "@/components/markets/markets-table-live";
 import { getMarketDataProvider } from "@/lib/hyperliquid/provider";
 
 export const dynamic = "force-dynamic";
@@ -42,7 +42,7 @@ export default async function MarketsPage() {
         <span className="source-marker">{sourceLabel(provider.source)}</span>
       </section>
 
-      <MarketsTable markets={markets} snapshots={snapshots} events={events} />
+      <MarketsTableLive markets={markets} snapshots={snapshots} events={events} />
     </AppShell>
   );
 }
