@@ -38,7 +38,16 @@ function getSideLabel(market: Market, side: 0 | 1): string {
 }
 
 function getPrimaryMidFromTwoSidedQuote(snapshot: MarketSnapshot): number | null {
-  if (snapshot.primaryBestBid == null || snapshot.primaryBestAsk == null || snapshot.primaryMid == null) {
+  if (snapshot.primaryMid == null) {
+    return null;
+  }
+
+  // Reject partial/stale one-sided quotes (exactly one side missing). Both sides
+  // present is a live two-sided quote; both sides absent with a mid is a
+  // candle-derived history point — both are valid.
+  const bidMissing = snapshot.primaryBestBid == null;
+  const askMissing = snapshot.primaryBestAsk == null;
+  if (bidMissing !== askMissing) {
     return null;
   }
 

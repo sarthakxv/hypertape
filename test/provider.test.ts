@@ -69,6 +69,7 @@ describe("market data provider selection", () => {
   });
 
   test("falls back to fixture snapshots and tape events in live mode when live data is unavailable", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network down")));
     const provider = getMarketDataProvider({
       HYPERTAPE_DATA_SOURCE: "live"
     });
