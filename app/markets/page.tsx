@@ -2,19 +2,35 @@ import { AppShell } from "@/components/layout/app-shell";
 import { MarketsTable } from "@/components/markets/markets-table";
 import { getMarketDataProvider } from "@/lib/hyperliquid/provider";
 
+export const dynamic = "force-dynamic";
+
 function sourceLabel(source: string): string {
   if (source === "live") return "Source: live Hyperliquid";
-  if (source === "live-with-fixture-fallback") return "Source: fixture fallback";
   return "Source: fixture tape";
 }
 
 export default async function MarketsPage() {
   const provider = getMarketDataProvider(process.env);
-  const [markets, snapshots, events] = await Promise.all([
-    provider.getMarkets(),
-    provider.getSnapshots(),
-    provider.getTapeEvents()
-  ]);
+
+  let markets;
+  let snapshots;
+  let events;
+  try {
+    [markets, snapshots, events] = await Promise.all([
+      provider.getMarkets(),
+      provider.getSnapshots(),
+      provider.getTapeEvents()
+    ]);
+  } catch {
+    return (
+      <AppShell>
+        <section className="panel empty-state" aria-labelledby="markets-unavailable-heading">
+          <h1 id="markets-unavailable-heading">Live data unavailable</h1>
+          <span>We could not reach Hyperliquid right now. Try again shortly.</span>
+        </section>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>

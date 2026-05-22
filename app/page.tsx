@@ -6,19 +6,40 @@ import { LiveTape } from "@/components/tape/live-tape";
 import { getMarketDataProvider } from "@/lib/hyperliquid/provider";
 import { formatPoints, formatProbability } from "@/lib/markets/probability";
 
+export const dynamic = "force-dynamic";
+
 function sourceLabel(source: string): string {
   if (source === "live") return "Source: live Hyperliquid";
-  if (source === "live-with-fixture-fallback") return "Source: fixture fallback";
   return "Source: fixture tape";
+}
+
+function LiveDataUnavailable() {
+  return (
+    <AppShell>
+      <section className="panel empty-state" aria-labelledby="unavailable-heading">
+        <h1 id="unavailable-heading">Live data unavailable</h1>
+        <span>We could not reach Hyperliquid right now. Try again shortly.</span>
+      </section>
+    </AppShell>
+  );
 }
 
 export default async function HomePage() {
   const provider = getMarketDataProvider(process.env);
-  const [markets, snapshots, events] = await Promise.all([
-    provider.getMarkets(),
-    provider.getSnapshots(),
-    provider.getTapeEvents()
-  ]);
+
+  let markets;
+  let snapshots;
+  let events;
+  try {
+    [markets, snapshots, events] = await Promise.all([
+      provider.getMarkets(),
+      provider.getSnapshots(),
+      provider.getTapeEvents()
+    ]);
+  } catch {
+    return <LiveDataUnavailable />;
+  }
+
   const marketsById = new Map(markets.map((market) => [market.id, market]));
   const movers = [...events]
     .sort((left, right) => Math.abs(right.delta ?? 0) - Math.abs(left.delta ?? 0))
