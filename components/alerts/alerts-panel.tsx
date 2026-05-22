@@ -34,20 +34,24 @@ function typeLabel(type: AlertPreset["type"]): string {
 
 export function AlertsPanel({ presets }: AlertsPanelProps) {
   const [scope, setScope] = useState<LocalRule["scope"]>("watchlist");
-  const [threshold, setThreshold] = useState(5);
+  const [thresholdDraft, setThresholdDraft] = useState("5");
   const [windowSeconds, setWindowSeconds] = useState(900);
   const [rules, setRules] = useState<LocalRule[]>([]);
+  const parsedThreshold = Number(thresholdDraft);
+  const canAddRule = Number.isFinite(parsedThreshold) && parsedThreshold >= 1 && parsedThreshold <= 50;
   const rulePreview = useMemo(
-    () => `${scope} / ${threshold} point move / ${formatWindow(windowSeconds)}`,
-    [scope, threshold, windowSeconds]
+    () => `${scope} / ${canAddRule ? parsedThreshold : "-"} point move / ${formatWindow(windowSeconds)}`,
+    [canAddRule, parsedThreshold, scope, windowSeconds]
   );
 
   function addRule() {
+    if (!canAddRule) return;
+
     setRules((currentRules) => [
       {
         id: `${Date.now()}-${currentRules.length}`,
         scope,
-        threshold,
+        threshold: parsedThreshold,
         windowSeconds
       },
       ...currentRules
@@ -116,8 +120,9 @@ export function AlertsPanel({ presets }: AlertsPanelProps) {
                 type="number"
                 min="1"
                 max="50"
-                value={threshold}
-                onChange={(event) => setThreshold(Number(event.target.value))}
+                value={thresholdDraft}
+                onChange={(event) => setThresholdDraft(event.target.value)}
+                aria-invalid={!canAddRule}
               />
             </label>
             <label>
@@ -133,7 +138,7 @@ export function AlertsPanel({ presets }: AlertsPanelProps) {
               <Radio size={15} aria-hidden="true" />
               <span>{rulePreview}</span>
             </div>
-            <button type="button" onClick={addRule}>
+            <button type="button" onClick={addRule} disabled={!canAddRule}>
               <Plus size={16} aria-hidden="true" />
               Add local rule
             </button>

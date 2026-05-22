@@ -8,19 +8,28 @@ type ProbabilityChartProps = {
   snapshots: MarketSnapshot[];
 };
 
+function chartDataFromSnapshots(snapshots: MarketSnapshot[]): AreaData<UTCTimestamp>[] {
+  const pointsBySecond = new Map<number, number>();
+
+  for (const snapshot of snapshots) {
+    if (snapshot.primaryMid == null) continue;
+    pointsBySecond.set(
+      Math.floor(snapshot.timestamp / 1000),
+      Number((snapshot.primaryMid * 100).toFixed(2))
+    );
+  }
+
+  return [...pointsBySecond.entries()]
+    .sort(([leftTime], [rightTime]) => leftTime - rightTime)
+    .map(([time, value]) => ({
+      time: time as UTCTimestamp,
+      value
+    }));
+}
+
 export function ProbabilityChart({ snapshots }: ProbabilityChartProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const data = useMemo<AreaData<UTCTimestamp>[]>(
-    () =>
-      snapshots
-        .filter((snapshot) => snapshot.primaryMid != null)
-        .sort((left, right) => left.timestamp - right.timestamp)
-        .map((snapshot) => ({
-          time: Math.floor(snapshot.timestamp / 1000) as UTCTimestamp,
-          value: Number(((snapshot.primaryMid ?? 0) * 100).toFixed(2))
-        })),
-    [snapshots]
-  );
+  const data = useMemo(() => chartDataFromSnapshots(snapshots), [snapshots]);
 
   useEffect(() => {
     const container = containerRef.current;
