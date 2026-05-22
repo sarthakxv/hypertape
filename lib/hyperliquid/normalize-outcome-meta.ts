@@ -1,87 +1,53 @@
 import { buildOutcomeSide, getPrimaryAndDualSides } from "./asset-encoding";
-import type { Market, MarketStatus, MarketStatusSource } from "./types";
+import type { RawOutcomeMetaEntry } from "./hyperliquid-client";
+import { parseOutcomeDescription } from "./parse-description";
+import type { Market, MarketStatus } from "./types";
 
-export type RawOutcomeSideSpec = {
-  name?: unknown;
-  label?: unknown;
-};
-
-export type RawOutcomeMeta = {
-  outcomeId?: unknown;
-  questionId?: unknown;
-  name?: unknown;
-  title?: unknown;
-  description?: unknown;
-  sideSpecs?: readonly RawOutcomeSideSpec[];
-  quoteToken?: unknown;
-  expiryTime?: unknown;
-  status?: unknown;
-  [key: string]: unknown;
-};
-
-function normalizeStatus(status: unknown): MarketStatus {
-  if (status === "active" || status === "settling" || status === "settled") {
-    return status;
+function deriveStatus(expiryTime: string | undefined, now: number): MarketStatus {
+  if (expiryTime !== undefined && Date.parse(expiryTime) <= now) {
+    return "settled";
   }
 
-  return "unknown";
+  return "active";
 }
 
-function normalizeStatusSource(status: MarketStatus): MarketStatusSource {
-  return status === "unknown" ? "unknown" : "metadata";
-}
+/**
+ * Normalizes a single real-shape Hyperliquid `outcomeMeta` entry into a `Market`.
+ *
+ * The real API exposes `outcome` (a number), a pipe-delimited `description`, and
+ * `sideSpecs`. There is no status field, so status is derived purely from the parsed
+ * expiry: past expiry → "settled", otherwise (including no expiry) → "active".
+ */
+export function normalizeOutcomeMeta(raw: RawOutcomeMetaEntry, now: number = Date.now()): Market {
+  const outcome = raw.outcome;
+  const parsed = parseOutcomeDescription(raw.description);
 
-function numberFromMetadata(value: unknown, fieldName: string): number {
-  const numericValue = typeof value === "string" ? Number(value) : value;
-
-  if (typeof numericValue !== "number" || !Number.isFinite(numericValue)) {
-    throw new Error(`Invalid outcome metadata: ${fieldName} is required`);
-  }
-
-  return numericValue;
-}
-
-function optionalNumberFromMetadata(value: unknown): number | undefined {
-  if (value == null) return undefined;
-  const numericValue = typeof value === "string" ? Number(value) : value;
-  return typeof numericValue === "number" && Number.isFinite(numericValue) ? numericValue : undefined;
-}
-
-function optionalStringFromMetadata(value: unknown): string | undefined {
-  return typeof value === "string" && value.length > 0 ? value : undefined;
-}
-
-function sideLabel(sideSpec: RawOutcomeSideSpec | undefined, fallback: string): string {
-  return optionalStringFromMetadata(sideSpec?.name) ?? optionalStringFromMetadata(sideSpec?.label) ?? fallback;
-}
-
-export function normalizeOutcomeMeta(raw: RawOutcomeMeta, timestamp: number = Date.now()): Market {
-  const outcomeId = numberFromMetadata(raw.outcomeId, "outcomeId");
-  const questionId = optionalNumberFromMetadata(raw.questionId);
-  const name = optionalStringFromMetadata(raw.name) ?? optionalStringFromMetadata(raw.title) ?? `Outcome ${outcomeId}`;
-  const description = optionalStringFromMetadata(raw.description);
   const sides = [
-    buildOutcomeSide(outcomeId, 0, sideLabel(raw.sideSpecs?.[0], "Yes")),
-    buildOutcomeSide(outcomeId, 1, sideLabel(raw.sideSpecs?.[1], "No"))
+    buildOutcomeSide(outcome, 0, raw.sideSpecs[0].name),
+    buildOutcomeSide(outcome, 1, raw.sideSpecs[1].name)
   ] as const;
   const { primarySide, dualSide } = getPrimaryAndDualSides(sides);
-  const status = normalizeStatus(raw.status);
+
+  const expiryTime = parsed.expiry;
+  const status = deriveStatus(expiryTime, now);
 
   return {
-    id: String(outcomeId),
-    outcomeId,
-    questionId,
-    name,
-    description,
-    quoteToken: optionalStringFromMetadata(raw.quoteToken),
-    expiryTime: optionalStringFromMetadata(raw.expiryTime),
+    id: String(outcome),
+    outcomeId: outcome,
+    name: raw.name,
+    description: raw.description,
+    underlying: parsed.underlying,
+    targetPrice: parsed.targetPrice,
+    priceThresholds: parsed.priceThresholds,
+    period: parsed.period,
+    expiryTime,
     sides,
     primarySide,
     dualSide,
     status,
-    statusSource: normalizeStatusSource(status),
+    statusSource: "expiry",
     raw,
-    createdAt: timestamp,
-    updatedAt: timestamp
+    createdAt: now,
+    updatedAt: now
   };
 }

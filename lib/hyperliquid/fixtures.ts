@@ -1,39 +1,29 @@
 import { depthWithinPoints } from "@/lib/markets/depth";
 import { calculateMid, calculateSpread } from "@/lib/markets/probability";
+import type { RawOutcomeMetaEntry } from "./hyperliquid-client";
 import type { BookLevel, MarketSnapshot, TapeEvent } from "./types";
 
-export const fixtureOutcomeMeta = [
+export const fixtureOutcomeMeta: RawOutcomeMetaEntry[] = [
   {
-    outcomeId: 7,
-    questionId: 3,
+    // Future expiry relative to FIXTURE_NORMALIZED_AT -> derived status "active".
+    outcome: 7,
     name: "BTC above 105k by 06:00 UTC",
-    description: "Resolves Yes if BTC trades above 105k before expiry.",
-    sideSpecs: [{ name: "Yes" }, { name: "No" }],
-    quoteToken: "USDH",
-    expiryTime: "2026-05-23T06:00:00.000Z",
-    status: "active"
+    description: "class:priceBinary|underlying:BTC|expiry:20260523-0600|targetPrice:105000|period:1d",
+    sideSpecs: [{ name: "Yes" }, { name: "No" }]
   },
   {
-    outcomeId: 8,
-    questionId: 4,
+    outcome: 8,
     name: "HYPE closes green today",
-    description: "Resolves Yes if HYPE closes above the daily open.",
-    sideSpecs: [{ name: "Yes" }, { name: "No" }],
-    quoteToken: "USDH",
-    expiryTime: "2026-05-23T00:00:00.000Z",
-    status: "active"
+    description: "class:priceBinary|underlying:HYPE|expiry:20260524-0000|targetPrice:30|period:1d",
+    sideSpecs: [{ name: "Yes" }, { name: "No" }]
   },
   {
-    outcomeId: 9,
-    questionId: 5,
+    outcome: 9,
     name: "SOL above 180 by Friday close",
-    description: "Resolves Up if SOL is above 180 by Friday close.",
-    sideSpecs: [{ name: "Up" }, { name: "Down" }],
-    quoteToken: "USDC",
-    expiryTime: "2026-05-24T00:00:00.000Z",
-    status: "active"
+    description: "class:priceBinary|underlying:SOL|expiry:20260524-2000|targetPrice:180|period:1w",
+    sideSpecs: [{ name: "Up" }, { name: "Down" }]
   }
-] as const;
+];
 
 const FIXTURE_NOW = Date.parse("2026-05-22T12:00:00.000Z");
 
