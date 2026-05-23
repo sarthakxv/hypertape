@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { MarketCard, MarketSnapshot, TapeEvent } from "@/lib/hyperliquid/types";
 import { formatPoints, formatProbability } from "@/lib/markets/probability";
@@ -29,14 +30,18 @@ function compactCurrency(value: number | null | undefined): string {
 
 function formatExpiry(value: string | undefined): string {
   if (!value) return "—";
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
+  const date = new Date(value);
+  const parts = new Intl.DateTimeFormat("en", {
+    weekday: "short",
     day: "numeric",
-    hour: "2-digit",
+    month: "short",
+    hour: "numeric",
     minute: "2-digit",
-    hour12: false,
+    hour12: true,
     timeZone: "UTC",
-  }).format(new Date(value));
+  }).formatToParts(date);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  return `${get("weekday")} ${get("day")} ${get("month")} @ ${get("hour")}:${get("minute")} ${get("dayPeriod").toLowerCase()}`;
 }
 
 function latestSnapshotsByMarket(snapshots: MarketSnapshot[]): Map<string, MarketSnapshot> {
@@ -62,6 +67,27 @@ function eventDelta(events: TapeEvent[], marketId: string, windowSeconds: number
   return event?.delta == null ? null : event.delta * 100;
 }
 
+function StatusBadge({ status }: { status: string }) {
+  const isLive = status === "active";
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        "inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-[0.07em]",
+        statusClass[status] ?? "border-border bg-muted text-muted-foreground"
+      )}
+    >
+      {isLive && (
+        <span className="relative flex size-1.5 shrink-0">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-chart-positive opacity-75" />
+          <span className="relative inline-flex size-1.5 rounded-full bg-chart-positive" />
+        </span>
+      )}
+      {isLive ? "Live" : status}
+    </Badge>
+  );
+}
+
 function DeltaStat({ label, value }: { label: string; value: number | null }) {
   const isNeg = value != null && value < 0;
   return (
@@ -85,18 +111,24 @@ function LegBar({ label, probability }: { label: string; probability: number | n
   const pct = probability != null ? Math.round(probability * 100) : 0;
   return (
     <div className="flex items-center gap-2.5">
-      <span className="w-[88px] shrink-0 truncate text-[11px] text-muted-foreground">{label}</span>
-      <div className="relative h-1 flex-1 overflow-hidden rounded-full bg-border">
+      <span className="w-22 shrink-0 truncate text-[12px] text-muted-foreground">{label}</span>
+      <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-border">
         <div
           className="absolute inset-y-0 left-0 rounded-full bg-primary/70"
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="w-7 shrink-0 text-right text-[11px] font-bold tabular-nums text-foreground">
+      <span className="w-8 shrink-0 text-right text-[13px] font-bold tabular-nums text-foreground">
         {formatLegPercent(probability)}
       </span>
     </div>
   );
+}
+
+function isBtc(underlying: string | undefined): boolean {
+  if (!underlying) return false;
+  const u = underlying.toLowerCase();
+  return u === "btc" || u === "bitcoin";
 }
 
 const cardBase =
@@ -118,31 +150,29 @@ function BinaryMarketCard({
     <article className="relative flex flex-col">
       <Link href={`/markets/${market.id}`} className={cardBase}>
         {/* Header */}
-        <div className="flex min-h-0 flex-col gap-1.5 pr-8">
-          <div className="flex items-center gap-2">
-            <Badge
-              variant="outline"
-              className={cn(
-                "text-[8px] font-black uppercase tracking-[0.07em]",
-                statusClass[market.status]
+        <div className="flex min-h-0 gap-2.5 pr-8">
+          {isBtc(market.underlying) && (
+            <Image
+              src="/icons/bitcoin.png"
+              alt="BTC"
+              width={28}
+              height={28}
+              className="mt-0.5 shrink-0 rounded-full min-w-fit"
+            />
+          )}
+          <div className="flex min-w-0 flex-col gap-1.5">
+            <div className="flex items-center gap-2">
+              <StatusBadge status={market.status} />
+              {market.underlying && (
+                <span className="text-[10px] font-semibold text-muted-foreground">
+                  {market.underlying}
+                </span>
               )}
-            >
-              {market.status}
-            </Badge>
-            {market.underlying && (
-              <span className="text-[10px] font-semibold text-muted-foreground">
-                {market.underlying}
-              </span>
-            )}
+            </div>
+            <h3 className="line-clamp-2 text-[15px] font-bold leading-snug text-foreground">
+              {market.name}
+            </h3>
           </div>
-          <h3 className="line-clamp-2 text-[13px] font-semibold leading-snug text-foreground">
-            {market.name}
-          </h3>
-          <p className="text-[11px] text-muted-foreground">
-            {market.sides[market.primarySide].label}
-            <span className="mx-1 text-border">/</span>
-            {market.sides[market.dualSide].label}
-          </p>
         </div>
 
         {/* Primary probability — hero number */}
@@ -162,11 +192,8 @@ function BinaryMarketCard({
         {/* Footer stats */}
         <div className="mt-auto flex items-center justify-between border-t border-border pt-3">
           <span className="text-[11px] text-muted-foreground">
-            {snapshot?.canonicalSpread != null
-              ? formatPoints(snapshot.canonicalSpread * 100)
-              : "—"}{" "}
-            <span className="text-border">·</span>{" "}
-            {compactCurrency(snapshot?.totalDepthThreePoints)}
+            {compactCurrency(snapshot?.recentVolume)}{" "}
+            <span className="opacity-50">vol</span>
           </span>
           <span className="text-[11px] tabular-nums text-muted-foreground">
             {formatExpiry(market.expiryTime)}
@@ -181,34 +208,50 @@ function BinaryMarketCard({
   );
 }
 
-function BucketMarketCard({ market }: { market: Extract<MarketCard, { kind: "bucket" }> }) {
+function BucketMarketCard({
+  market,
+  snapshot,
+}: {
+  market: Extract<MarketCard, { kind: "bucket" }>;
+  snapshot: MarketSnapshot | undefined;
+}) {
+  const sortedLegs = [...market.legs].sort((a, b) => {
+    if (a.probability == null && b.probability == null) return 0;
+    if (a.probability == null) return 1;
+    if (b.probability == null) return -1;
+    return b.probability - a.probability;
+  });
+
   return (
     <article className="relative flex flex-col">
       <Link href={`/markets/${market.id}`} className={cardBase}>
         {/* Header */}
-        <div className="flex min-h-0 flex-col gap-1.5 pr-8">
-          <div className="flex items-center gap-2">
-            <Badge
-              variant="outline"
-              className={cn(
-                "text-[8px] font-black uppercase tracking-[0.07em]",
-                statusClass[market.status]
-              )}
-            >
-              {market.status}
-            </Badge>
-            <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
-              Multi-outcome
-            </span>
+        <div className="flex min-h-0 gap-2.5 pr-8">
+          {isBtc(market.underlying) && (
+            <Image
+              src="/icons/bitcoin.png"
+              alt="BTC"
+              width={28}
+              height={28}
+              className="mt-0.5 shrink-0 rounded-full min-w-fit"
+            />
+          )}
+          <div className="flex min-w-0 flex-col gap-1.5">
+            <div className="flex items-center gap-2">
+              <StatusBadge status={market.status} />
+              <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                Multi-outcome
+              </span>
+            </div>
+            <h3 className="line-clamp-2 text-[15px] font-bold leading-snug text-foreground">
+              {market.name}
+            </h3>
           </div>
-          <h3 className="line-clamp-2 text-[13px] font-semibold leading-snug text-foreground">
-            {market.name}
-          </h3>
         </div>
 
-        {/* Leg probability bars */}
-        <div className="flex flex-col gap-2">
-          {market.legs.map((leg) => (
+        {/* Leg probability bars — sorted highest to lowest */}
+        <div className="flex flex-col gap-2.5">
+          {sortedLegs.map((leg) => (
             <LegBar key={leg.outcomeId} label={leg.label} probability={leg.probability} />
           ))}
         </div>
@@ -216,7 +259,8 @@ function BucketMarketCard({ market }: { market: Extract<MarketCard, { kind: "buc
         {/* Footer */}
         <div className="mt-auto flex items-center justify-between border-t border-border pt-3">
           <span className="text-[11px] text-muted-foreground">
-            {market.legs.length} outcomes
+            {compactCurrency(snapshot?.recentVolume)}{" "}
+            <span className="opacity-50">vol</span>
           </span>
           <span className="text-[11px] tabular-nums text-muted-foreground">
             {formatExpiry(market.expiryTime)}
@@ -246,7 +290,7 @@ export function MarketsGrid({ markets, snapshots, events }: MarketsGridProps) {
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {orderedMarkets.map((market) => {
         if (market.kind === "bucket") {
-          return <BucketMarketCard key={market.id} market={market} />;
+          return <BucketMarketCard key={market.id} market={market} snapshot={latestSnapshots.get(market.id)} />;
         }
         return (
           <BinaryMarketCard

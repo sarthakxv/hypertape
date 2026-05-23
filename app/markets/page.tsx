@@ -51,19 +51,11 @@ export default async function MarketsPage() {
 
   return (
     <AppShell>
-      <section className="mb-4 flex items-end gap-4" aria-labelledby="markets-heading">
-        <div>
-          <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-chart-info">
-            Markets
-          </p>
-          <h1 id="markets-heading" className="m-0 text-[28px] font-bold leading-[1.15]">
-            HIP-4 book monitor
-          </h1>
-        </div>
-        <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-border bg-[#0c1118] px-2.5 py-1.5 text-xs text-[#b9c4d5]">
+      <div className="mb-4 flex justify-end">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-[#0c1118] px-2.5 py-1.5 text-xs text-[#b9c4d5]">
           <SourcePill source={provider.source} />
         </span>
-      </section>
+      </div>
 
       <SWRProvider fallback={{ [LIVE_KEY]: { source: provider.source, markets, snapshots, events } }}>
         <MarketsGridLive markets={markets} snapshots={snapshots} events={events} />

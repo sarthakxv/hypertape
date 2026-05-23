@@ -1,13 +1,18 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Bell, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type AppShellProps = {
   children: React.ReactNode;
 };
 
 export function AppShell({ children }: AppShellProps) {
+  const pathname = usePathname();
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-10 flex min-h-17 flex-wrap items-center gap-3 border-b border-border bg-card/95 px-4 sm:gap-4 sm:px-6 backdrop-blur-sm">
@@ -35,13 +40,23 @@ export function AppShell({ children }: AppShellProps) {
         <nav className="flex items-center gap-1" aria-label="Primary navigation">
           <Link
             href="/markets"
-            className="rounded px-2.5 py-2 text-[13px] text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
+            className={cn(
+              "rounded px-2.5 py-2 text-[13px] transition-colors",
+              pathname === "/markets" || pathname.startsWith("/markets/")
+                ? "bg-card text-foreground"
+                : "text-muted-foreground hover:bg-card hover:text-foreground"
+            )}
           >
             Markets
           </Link>
           <Link
             href="/alerts"
-            className="rounded px-2.5 py-2 text-[13px] text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
+            className={cn(
+              "rounded px-2.5 py-2 text-[13px] transition-colors",
+              pathname === "/alerts"
+                ? "bg-card text-foreground"
+                : "text-muted-foreground hover:bg-card hover:text-foreground"
+            )}
           >
             Alerts
           </Link>

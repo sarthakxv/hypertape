@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Bell, Clock, Database, Info, Layers, Radio, SlidersHorizontal } from "lucide-react";
 import { ProbabilityChart } from "@/components/charts/probability-chart";
 import { LiveTape } from "@/components/tape/live-tape";
@@ -125,6 +126,12 @@ function bucketLegWidth(probability: number | null): string {
   return `${Math.max(0, Math.min(100, Math.round(probability * 100)))}%`;
 }
 
+function isBtc(underlying: string | undefined): boolean {
+  if (!underlying) return false;
+  const u = underlying.toLowerCase();
+  return u === "btc" || u === "bitcoin";
+}
+
 function PanelHeader({
   eyebrow,
   title,
@@ -165,17 +172,28 @@ function BucketMarketDetail({
         aria-labelledby="market-heading"
       >
         <div className="flex-1">
-          <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-chart-info">
-            Market Detail
-          </p>
-          <h1 id="market-heading" className="m-0 text-[28px] font-medium tracking-wide leading-[1.15]">
-            {market.name}
-          </h1>
+          <div className="flex flex-col items-start gap-3">
+              <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-chart-info">
+                Market Detail
+              </p>
+              <div className="inline-flex items-center gap-2.5">
+                {isBtc(market.underlying) && (
+                  <Image
+                    src="/icons/bitcoin.png"
+                    alt="BTC"
+                    width={40}
+                    height={40}
+                    className="mt-0 shrink-0 rounded-full"
+                  />
+                )}
+                <h1 id="market-heading" className="m-0 text-[28px] font-medium tracking-wide leading-[1.15]">
+                    {market.name}
+                </h1>
+              </div>
+          </div>
           <div className="mt-2.5 flex flex-wrap items-center gap-1.5" aria-label="Market metadata">
             {[
-              `Question ${market.questionId}`,
               `Underlying ${market.underlying ?? "unknown"}`,
-              `Period ${market.period ?? "unknown"}`,
               `Expiry ${formatExpiry(market.expiryTime)}`,
             ].map((label) => (
               <span
@@ -195,7 +213,7 @@ function BucketMarketDetail({
         </span>
       </section>
 
-      <Card aria-labelledby="bucket-outcomes-heading">
+      <Card className="max-w-2xl" aria-labelledby="bucket-outcomes-heading">
         <PanelHeader
           eyebrow="Outcomes"
           title="Bucket probabilities"
@@ -225,15 +243,6 @@ function BucketMarketDetail({
         </CardContent>
       </Card>
     </>
-  );
-}
-
-export function MarketDetail({ market, snapshots, events, sourceLabel }: MarketDetailProps) {
-  if (market.kind === "bucket") {
-    return <BucketMarketDetail market={market} sourceLabel={sourceLabel} />;
-  }
-  return (
-    <BinaryMarketDetail market={market} snapshots={snapshots} events={events} sourceLabel={sourceLabel} />
   );
 }
 
@@ -269,19 +278,30 @@ function BinaryMarketDetail({ market, snapshots, events, sourceLabel }: BinaryMa
         aria-labelledby="market-heading"
       >
         <div className="flex-1">
-          <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-chart-info">
-            Market Detail
-          </p>
-          <h1 id="market-heading" className="m-0 text-[28px] font-medium tracking-wide leading-[1.15]">
-            {market.name}
-          </h1>
+          <div className="flex flex-col items-start gap-3">
+              <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-chart-info">
+                Market Detail
+            </p>
+            <div className="flex items-center gap-2.5">
+              {isBtc(market.underlying) && (
+                <Image
+                  src="/icons/bitcoin.png"
+                  alt="BTC"
+                  width={40}
+                  height={40}
+                  className="mt-0.5 shrink-0 rounded-full"
+                />
+              )}
+                <h1 id="market-heading" className="m-0 text-[28px] font-medium tracking-wide leading-[1.15]">
+                  {market.name}
+                </h1>
+            </div>
+          </div>
           <div className="mt-2.5 flex items-center flex-wrap gap-1.5" aria-label="Market metadata">
             {[
-              `Outcome ${market.outcomeId}`,
-              `Quote ${market.quoteToken ?? "unknown"}`,
+              market.quoteToken ? `Quote ${market.quoteToken}` : null,
               `Expiry ${formatExpiry(market.expiryTime)}`,
-              `${market.statusSource} status`,
-            ].map((label) => (
+            ].filter(Boolean).map((label) => (
               <span
                 key={label}
                 className="inline-flex min-h-6 items-center rounded-md border border-border bg-[#0b0f15] px-1.5 py-1 text-xs text-[#b9c4d5]"
@@ -519,5 +539,14 @@ function BinaryMarketDetail({ market, snapshots, events, sourceLabel }: BinaryMa
         </CardContent>
       </Card>
     </>
+  );
+}
+
+export function MarketDetail({ market, snapshots, events, sourceLabel }: MarketDetailProps) {
+  if (market.kind === "bucket") {
+    return <BucketMarketDetail market={market} sourceLabel={sourceLabel} />;
+  }
+  return (
+    <BinaryMarketDetail market={market} snapshots={snapshots} events={events} sourceLabel={sourceLabel} />
   );
 }

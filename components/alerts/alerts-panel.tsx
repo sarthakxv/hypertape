@@ -97,21 +97,6 @@ export function AlertsPanel({ presets }: AlertsPanelProps) {
 
   return (
     <>
-      {/* Page header */}
-      <section className="mb-4 flex items-end gap-4" aria-labelledby="alerts-heading">
-        <div>
-          <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-chart-info">
-            Alerts
-          </p>
-          <h1 id="alerts-heading" className="m-0 text-[28px] font-bold leading-[1.15]">
-            Local alert drafts
-          </h1>
-        </div>
-        <span className="ml-auto rounded-full border border-border bg-[#0c1118] px-2.5 py-1.5 text-xs text-[#b9c4d5]">
-          Telegram disabled
-        </span>
-      </section>
-
       {/* Telegram status */}
       <Card className="mb-3.5" aria-labelledby="telegram-heading">
         <PanelHeader
