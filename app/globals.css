@@ -4,62 +4,75 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Hypertape data-colour tokens — extends shadcn's @theme inline */
+/* Bridge CSS vars → Tailwind utility classes */
 @theme inline {
+  --font-sans: var(--font-geist-sans);
+
+  --color-background:         var(--background);
+  --color-foreground:         var(--foreground);
+  --color-card:               var(--card);
+  --color-card-foreground:    var(--card-foreground);
+  --color-popover:            var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary:            var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary:          var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted:              var(--muted);
+  --color-muted-foreground:   var(--muted-foreground);
+  --color-accent:             var(--accent);
+  --color-accent-foreground:  var(--accent-foreground);
+  --color-destructive:        var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border:             var(--border);
+  --color-input:              var(--input);
+  --color-ring:               var(--ring);
+
   --color-chart-positive: var(--chart-positive);
   --color-chart-negative: var(--chart-negative);
   --color-chart-warning:  var(--chart-warning);
   --color-chart-info:     var(--chart-info);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
 :root {
-  /* Surfaces */
   --background:  #04060C;
   --card:        #0a1218;
   --muted:       #0d1620;
   --popover:     #0a1218;
 
-  /* Borders */
   --border:      #131e28;
   --input:       #131e28;
   --ring:        #50D2C1;
 
-  /* Text */
   --foreground:          #eef4ff;
   --muted-foreground:    #8f9bad;
   --card-foreground:     #eef4ff;
   --popover-foreground:  #eef4ff;
 
-  /* Interactive — Hyperliquid teal primary */
   --primary:             #50D2C1;
   --primary-foreground:  #04060C;
 
-  /*
-   * shadcn Button default variant uses bg-primary by convention.
-   * We override button.tsx (Task 4) so buttons render as dark-teal-bg /
-   * teal-text (HL style) rather than bright teal bg.
-   * --primary stays for links, active nav, and focus rings.
-   */
   --accent:              #17453F;
   --accent-foreground:   #50D2C1;
 
-  /* Data colours — semantic only, not for UI chrome */
   --chart-positive:  #41d98b;
   --chart-negative:  #ff6b78;
   --chart-warning:   #f5c469;
   --chart-info:      #62a8ff;
 
-  /* Shape — New York style */
   --radius: 4px;
 
-  /* shadcn required tokens */
   --secondary:              #0d1620;
   --secondary-foreground:   #eef4ff;
   --destructive:            #ff6b78;
   --destructive-foreground: #eef4ff;
 }
 
-/* Kept for overflow-scroll on table panels */
 .table-scroll {
   overflow-x: auto;
 }
