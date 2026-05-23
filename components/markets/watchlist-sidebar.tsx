@@ -3,13 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Bell, Star } from "lucide-react";
-import type { Market, MarketSnapshot } from "@/lib/hyperliquid/types";
+import type { MarketCard, MarketSnapshot } from "@/lib/hyperliquid/types";
 import { formatPoints, formatProbability } from "@/lib/markets/probability";
 import { readWatchlistFromStorage } from "@/lib/watchlist/storage";
 import { watchlistChangedEvent } from "@/components/markets/watchlist-star";
 
 type WatchlistSidebarProps = {
-  markets: Market[];
+  markets: MarketCard[];
   snapshots: MarketSnapshot[];
 };
 
@@ -35,7 +35,7 @@ export function WatchlistSidebar({ markets, snapshots }: WatchlistSidebarProps) 
   const [marketIds, setMarketIds] = useState<string[]>([]);
   const latestSnapshots = useMemo(() => latestSnapshotsByMarket(snapshots), [snapshots]);
   const marketsById = useMemo(() => new Map(markets.map((market) => [market.id, market])), [markets]);
-  const watchedMarkets = marketIds.map((marketId) => marketsById.get(marketId)).filter((market): market is Market => Boolean(market));
+  const watchedMarkets = marketIds.map((marketId) => marketsById.get(marketId)).filter((market): market is MarketCard => Boolean(market));
 
   useEffect(() => {
     function syncState() {

@@ -1,26 +1,38 @@
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 import { getMarketDataProvider } from "@/lib/hyperliquid/provider";
 
 describe("market data provider selection", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
+  test("defaults to the live provider", () => {
+    const provider = getMarketDataProvider({});
+    expect(provider.source).toBe("live");
   });
 
-  test("uses fixture provider by default", async () => {
-    const provider = getMarketDataProvider({});
-    const markets = await provider.getMarkets();
+  test("uses the live provider for any non-fixture data source", () => {
+    const provider = getMarketDataProvider({ HYPERTAPE_DATA_SOURCE: "live" });
+    expect(provider.source).toBe("live");
+  });
+
+  test("uses the fixture provider when the data source is fixture", async () => {
+    const provider = getMarketDataProvider({ HYPERTAPE_DATA_SOURCE: "fixture" });
     expect(provider.source).toBe("fixture");
+
+    const markets = await provider.getMarkets();
+    expect(markets.length).toBeGreaterThan(0);
     expect(markets.map((market) => market.name)).toEqual([
-      "BTC above 105k by 06:00 UTC",
-      "HYPE closes green today",
-      "SOL above 180 by Friday close"
+      "Bitcoin Up or Down Daily",
+      "HYPE Up or Down Daily",
+      "Solana Up or Down Weekly"
     ]);
-    expect(markets[2]?.primarySide).toBe(0);
-    expect(markets[2]?.dualSide).toBe(1);
+    const third = markets[2];
+    expect(third?.kind).toBe("binary");
+    if (third?.kind === "binary") {
+      expect(third.primarySide).toBe(0);
+      expect(third.dualSide).toBe(1);
+    }
   });
 
   test("filters fixture snapshots and tape events by market id", async () => {
-    const provider = getMarketDataProvider({});
+    const provider = getMarketDataProvider({ HYPERTAPE_DATA_SOURCE: "fixture" });
 
     const snapshots = await provider.getSnapshots("7");
     const events = await provider.getTapeEvents("7");
@@ -32,52 +44,19 @@ describe("market data provider selection", () => {
   });
 
   test("returns deep-cloned fixture markets so consumers cannot mutate provider state", async () => {
-    const provider = getMarketDataProvider({});
+    const provider = getMarketDataProvider({ HYPERTAPE_DATA_SOURCE: "fixture" });
 
     const firstRead = await provider.getMarkets();
-    firstRead[0]!.sides[0]!.label = "Mutated";
+    const firstMarket = firstRead[0]!;
+    if (firstMarket.kind === "binary") {
+      firstMarket.sides[0]!.label = "Mutated";
+    }
 
     const secondRead = await provider.getMarkets();
-    expect(secondRead[0]!.sides[0]!.label).toBe("Yes");
-  });
-
-  test("falls back to fixtures when live provider fails", async () => {
-    const provider = getMarketDataProvider({
-      HYPERTAPE_DATA_SOURCE: "live",
-      HYPERTAPE_FORCE_LIVE_FAILURE: "1"
-    });
-
-    const markets = await provider.getMarkets();
-    expect(provider.source).toBe("live-with-fixture-fallback");
-    expect(markets.map((market) => market.name)).toContain("BTC above 105k by 06:00 UTC");
-  });
-
-  test("falls back through the live provider wrapper when outcomeMeta fetch fails", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network down")));
-    const provider = getMarketDataProvider({
-      HYPERTAPE_DATA_SOURCE: "live"
-    });
-
-    const markets = await provider.getMarkets();
-
-    expect(provider.source).toBe("live-with-fixture-fallback");
-    expect(markets.map((market) => market.name)).toEqual([
-      "BTC above 105k by 06:00 UTC",
-      "HYPE closes green today",
-      "SOL above 180 by Friday close"
-    ]);
-  });
-
-  test("falls back to fixture snapshots and tape events in live mode when live data is unavailable", async () => {
-    const provider = getMarketDataProvider({
-      HYPERTAPE_DATA_SOURCE: "live"
-    });
-
-    const snapshots = await provider.getSnapshots("7");
-    const events = await provider.getTapeEvents("7");
-
-    expect(provider.source).toBe("live-with-fixture-fallback");
-    expect(snapshots).toHaveLength(2);
-    expect(events[0]?.eventType).toBe("probability_move");
+    const secondMarket = secondRead[0]!;
+    expect(secondMarket.kind).toBe("binary");
+    if (secondMarket.kind === "binary") {
+      expect(secondMarket.sides[0]!.label).toBe("Up");
+    }
   });
 });

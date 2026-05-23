@@ -1,7 +1,7 @@
 import { fixtureMarketSnapshots, fixtureOutcomeMeta, fixtureTapeEvents } from "./fixtures";
 import { normalizeOutcomeMeta } from "./normalize-outcome-meta";
 import type { MarketDataProvider } from "./provider";
-import type { Market, MarketSnapshot, TapeEvent } from "./types";
+import type { Market, MarketCard, MarketSnapshot, TapeEvent } from "./types";
 
 const FIXTURE_NORMALIZED_AT = Date.parse("2026-05-22T12:00:00.000Z");
 
@@ -26,10 +26,10 @@ export function createFixtureMarketDataProvider(): MarketDataProvider {
 
   return {
     source: "fixture",
-    async getMarkets(): Promise<Market[]> {
+    async getMarkets(): Promise<MarketCard[]> {
       return markets.map(cloneMarket);
     },
-    async getMarket(marketId: string): Promise<Market | null> {
+    async getMarket(marketId: string): Promise<MarketCard | null> {
       const market = markets.find((candidate) => candidate.id === marketId);
       return market ? cloneMarket(market) : null;
     },

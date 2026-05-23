@@ -1,13 +1,18 @@
 import Link from "next/link";
-import type { Market, MarketSnapshot, TapeEvent } from "@/lib/hyperliquid/types";
+import type { MarketCard, MarketSnapshot, TapeEvent } from "@/lib/hyperliquid/types";
 import { formatPoints, formatProbability } from "@/lib/markets/probability";
 import { WatchlistStar } from "@/components/markets/watchlist-star";
 
 type MarketsTableProps = {
-  markets: Market[];
+  markets: MarketCard[];
   snapshots: MarketSnapshot[];
   events: TapeEvent[];
 };
+
+function formatLegPercent(probability: number | null): string {
+  if (probability == null) return "-";
+  return `${Math.round(probability * 100)}%`;
+}
 
 function compactCurrency(value: number | null | undefined): string {
   if (value == null) return "-";
@@ -94,6 +99,37 @@ export function MarketsTable({ markets, snapshots, events }: MarketsTableProps) 
           </thead>
           <tbody>
             {orderedMarkets.map((market) => {
+              if (market.kind === "bucket") {
+                return (
+                  <tr key={market.id}>
+                    <th scope="row">
+                      <Link className="market-link" href={`/markets/${market.id}`}>
+                        <span>{market.name}</span>
+                        <ul className="bucket-legs">
+                          {market.legs.map((leg) => (
+                            <li key={leg.outcomeId}>
+                              {leg.label} <strong>{formatLegPercent(leg.probability)}</strong>
+                            </li>
+                          ))}
+                        </ul>
+                      </Link>
+                    </th>
+                    <td className="metric-strong">Multi</td>
+                    <td className="metric-up">-</td>
+                    <td className="metric-up">-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>{formatExpiry(market.expiryTime)}</td>
+                    <td>
+                      <span className={`status-pill status-${market.status}`}>{market.status}</span>
+                    </td>
+                    <td>
+                      <WatchlistStar marketId={market.id} marketName={market.name} />
+                    </td>
+                  </tr>
+                );
+              }
+
               const snapshot = latestSnapshots.get(market.id);
               const fiveMinuteDelta = eventDelta(events, market.id, 300);
               const fifteenMinuteDelta = eventDelta(events, market.id, 900);

@@ -20,6 +20,7 @@ export type MarketStatus = "active" | "settling" | "settled" | "unknown";
 export type MarketStatusSource = "metadata" | "expiry" | "book" | "trade" | "indexer" | "unknown";
 
 export type Market = {
+  kind: "binary";
   id: string;
   outcomeId: number;
   questionId?: number;
@@ -42,6 +43,33 @@ export type Market = {
   createdAt: number;
   updatedAt: number;
 };
+
+export type BucketLeg = {
+  outcomeId: number;
+  index: number;
+  label: string;
+  yesCoin: string;
+  probability: number | null;
+};
+
+export type BucketMarket = {
+  kind: "bucket";
+  id: string;
+  questionId: number;
+  name: string;
+  underlying?: string;
+  period?: string;
+  expiryTime?: string;
+  priceThresholds?: number[];
+  status: MarketStatus;
+  statusSource: MarketStatusSource;
+  legs: BucketLeg[];
+  raw: unknown;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type MarketCard = Market | BucketMarket;
 
 export type BookLevel = {
   price: number;

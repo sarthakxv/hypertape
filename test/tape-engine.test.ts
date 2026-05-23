@@ -3,6 +3,7 @@ import { generateProbabilityMoveEvents, rankTapeEvents } from "@/lib/tape/event-
 import type { Market, MarketSnapshot } from "@/lib/hyperliquid/types";
 
 const market = {
+  kind: "binary",
   id: "7",
   outcomeId: 7,
   name: "BTC above 105k by 06:00 UTC",
@@ -91,6 +92,32 @@ describe("tape event engine", () => {
     const events = generateProbabilityMoveEvents([market], [snapshot(1000, 0.42), oneSidedSnapshot], 5 * 60);
 
     expect(events).toHaveLength(0);
+  });
+
+  test("accepts a both-sides-null quote when the mid is present (candle-derived history)", () => {
+    const candlePoint = (timestamp: number, mid: number): MarketSnapshot => ({
+      ...snapshot(timestamp, mid),
+      primaryBestBid: null,
+      primaryBestAsk: null,
+      dualBestBid: null,
+      dualBestAsk: null,
+      dualMid: null,
+      canonicalSpread: null
+    });
+
+    const events = generateProbabilityMoveEvents(
+      [market],
+      [candlePoint(1000, 0.42), candlePoint(1000 + 5 * 60_000, 0.478)],
+      5 * 60
+    );
+
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      eventType: "probability_move",
+      previousProbability: 0.42,
+      currentProbability: 0.478,
+      severity: "medium"
+    });
   });
 
   test("labels the move from the compared snapshot side", () => {

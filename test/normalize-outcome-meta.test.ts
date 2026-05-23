@@ -1,77 +1,104 @@
 import { describe, expect, test } from "vitest";
 import { normalizeOutcomeMeta } from "@/lib/hyperliquid/normalize-outcome-meta";
+import type { RawOutcomeMetaEntry } from "@/lib/hyperliquid/hyperliquid-client";
+
+const NOW = Date.parse("2026-05-23T00:00:00.000Z");
 
 describe("outcome meta normalization", () => {
-  test("normalizes side labels, encodings, primary side, quote token, and raw metadata", () => {
-    const market = normalizeOutcomeMeta({
-      outcomeId: 7,
-      questionId: 3,
+  test("normalizes the real outcomeMeta shape: id, encodings, primary/dual, parsed fields, future expiry active", () => {
+    const raw: RawOutcomeMetaEntry = {
+      outcome: 7,
       name: "BTC above 105k by 06:00 UTC",
-      description: "Resolves Yes if BTC trades above 105k before expiry.",
-      sideSpecs: [{ name: "No" }, { name: "Yes" }],
-      quoteToken: "USDH",
-      expiryTime: "2026-05-23T06:00:00.000Z",
-      status: "active"
-    }, 1700000000000);
+      description: "class:priceBinary|underlying:BTC|expiry:20260523-0600|targetPrice:105000|period:1d",
+      sideSpecs: [{ name: "Yes" }, { name: "No" }]
+    };
 
+    const market = normalizeOutcomeMeta(raw, NOW);
+
+    expect(market.kind).toBe("binary");
     expect(market.id).toBe("7");
-    expect(market.primarySide).toBe(1);
-    expect(market.dualSide).toBe(0);
-    expect(market.quoteToken).toBe("USDH");
+    expect(market.outcomeId).toBe(7);
+    expect(market.name).toBe("Bitcoin Up or Down Daily");
+    expect(market.description).toBe(raw.description);
+
     expect(market.sides[0].encoding).toBe(70);
     expect(market.sides[1].encoding).toBe(71);
-    expect(market.status).toBe("active");
-    expect(market.statusSource).toBe("metadata");
-    expect(market.raw).toMatchObject({ outcomeId: 7 });
-  });
-
-  test("uses side zero as primary for nonstandard HYPE-style metadata", () => {
-    const market = normalizeOutcomeMeta({
-      outcomeId: 8,
-      questionId: 4,
-      name: "HYPE closes green today",
-      description: "Resolves Yes if HYPE closes above the daily open.",
-      sideSpecs: [{ name: "Yes" }, { name: "No" }],
-      quoteToken: "USDH",
-      expiryTime: "2026-05-23T00:00:00.000Z",
-      status: "active"
-    }, 1700000000000);
-
-    expect(market.id).toBe("8");
-    expect(market.name).toBe("HYPE closes green today");
+    expect(market.sides[0].label).toBe("Up");
+    expect(market.sides[1].label).toBe("Down");
     expect(market.primarySide).toBe(0);
     expect(market.dualSide).toBe(1);
-    expect(market.sides[0].coin).toBe("#80");
-    expect(market.sides[1].tokenName).toBe("+81");
+
+    expect(market.underlying).toBe("BTC");
+    expect(market.targetPrice).toBe(105000);
+    expect(market.period).toBe("1d");
+    expect(market.expiryTime).toBe("2026-05-23T06:00:00.000Z");
+
+    // expiry 06:00 is in the future relative to NOW (00:00)
+    expect(market.status).toBe("active");
+    expect(market.statusSource).toBe("expiry");
+
+    expect(market.raw).toBe(raw);
   });
 
-  test("falls back to side zero primary for non-Yes-No SOL metadata", () => {
-    const market = normalizeOutcomeMeta({
-      outcomeId: 9,
-      questionId: 5,
-      name: "SOL above 180 by Friday close",
-      description: "Resolves Up if SOL is above 180 by Friday close.",
-      sideSpecs: [{ name: "Up" }, { name: "Down" }],
-      quoteToken: "USDC",
-      expiryTime: "2026-05-24T00:00:00.000Z",
-      status: "active"
-    }, 1700000000000);
+  test("derives Yes primary even when Yes is listed second", () => {
+    const raw: RawOutcomeMetaEntry = {
+      outcome: 12,
+      name: "ETH flips",
+      description: "class:priceBinary|underlying:ETH|expiry:20260601-0600|targetPrice:4000|period:1d",
+      sideSpecs: [{ name: "No" }, { name: "Yes" }]
+    };
 
-    expect(market.id).toBe("9");
+    const market = normalizeOutcomeMeta(raw, NOW);
+
+    expect(market.sides[0].encoding).toBe(120);
+    expect(market.sides[1].encoding).toBe(121);
+    expect(market.primarySide).toBe(1);
+    expect(market.dualSide).toBe(0);
+  });
+
+  test("falls back to side zero primary for non-Yes/No (Up/Down) labels", () => {
+    const raw: RawOutcomeMetaEntry = {
+      outcome: 9,
+      name: "SOL above 180 by Friday close",
+      description: "class:priceBinary|underlying:SOL|expiry:20260524-0000|targetPrice:180|period:1w",
+      sideSpecs: [{ name: "Up" }, { name: "Down" }]
+    };
+
+    const market = normalizeOutcomeMeta(raw, NOW);
+
     expect(market.primarySide).toBe(0);
     expect(market.dualSide).toBe(1);
     expect(market.sides.map((side) => side.label)).toEqual(["Up", "Down"]);
-    expect(market.quoteToken).toBe("USDC");
+    expect(market.underlying).toBe("SOL");
   });
 
-  test("marks status source unknown when metadata status is absent or unrecognized", () => {
-    const market = normalizeOutcomeMeta({
-      outcomeId: 10,
-      name: "Unknown status market",
-      status: "paused"
-    }, 1700000000000);
+  test("derives settled status from a past expiry", () => {
+    const raw: RawOutcomeMetaEntry = {
+      outcome: 8,
+      name: "HYPE closed green",
+      description: "class:priceBinary|underlying:HYPE|expiry:20260522-0000|targetPrice:30|period:1d",
+      sideSpecs: [{ name: "Yes" }, { name: "No" }]
+    };
 
-    expect(market.status).toBe("unknown");
-    expect(market.statusSource).toBe("unknown");
+    const market = normalizeOutcomeMeta(raw, NOW);
+
+    expect(market.expiryTime).toBe("2026-05-22T00:00:00.000Z");
+    expect(market.status).toBe("settled");
+    expect(market.statusSource).toBe("expiry");
+  });
+
+  test("treats an outcome with no parseable expiry as active with expiry status source", () => {
+    const raw: RawOutcomeMetaEntry = {
+      outcome: 81,
+      name: "Recurring Fallback",
+      description: "other",
+      sideSpecs: [{ name: "Yes" }, { name: "No" }]
+    };
+
+    const market = normalizeOutcomeMeta(raw, NOW);
+
+    expect(market.expiryTime).toBeUndefined();
+    expect(market.status).toBe("active");
+    expect(market.statusSource).toBe("expiry");
   });
 });

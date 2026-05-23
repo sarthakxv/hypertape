@@ -510,6 +510,66 @@ h3 {
   font-size: 11px;
 }
 
+.bucket-legs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bucket-legs li {
+  color: #7f8b9e;
+  font-size: 11px;
+}
+
+.bucket-legs li strong {
+  color: #eff5ff;
+  font-weight: 700;
+}
+
+.bucket-outcome-list {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bucket-outcome-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.bucket-outcome-row span {
+  color: #c4cee0;
+  font-size: 13px;
+}
+
+.bucket-outcome-row strong {
+  color: #eff5ff;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.bucket-outcome-bar {
+  margin-top: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(127, 139, 158, 0.18);
+  overflow: hidden;
+}
+
+.bucket-outcome-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--green);
+}
+
 .metric-strong {
   color: var(--text) !important;
   font-weight: 800;

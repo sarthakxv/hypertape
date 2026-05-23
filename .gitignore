@@ -1,4 +1,9 @@
 .superpowers/
+.agents/
 node_modules/
 .next/
 tsconfig.tsbuildinfo
+
+# Local env files — keep the checked-in template only
+.env*
+!.env.example
