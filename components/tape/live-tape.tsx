@@ -62,7 +62,7 @@ export function LiveTape({ events }: LiveTapeProps) {
           Live book
         </Badge>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent className="max-h-[calc(100vh-200px)] overflow-y-auto p-0">
         <div className="divide-y divide-border">
           {orderedEvents.map((event) => {
             const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(eventText(event))}`;

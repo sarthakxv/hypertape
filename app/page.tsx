@@ -87,7 +87,7 @@ export default async function HomePage() {
 
           return (
             <Link
-              className="min-w-0 rounded-md border border-border bg-[#0d1219] p-3 transition-colors hover:border-primary/40"
+              className="min-w-0 rounded-md border border-border bg-[#0d1219] p-3 transition-[colors,transform] hover:border-primary/40 hover:-translate-y-0.5"
               href={`/markets/${event.marketId}`}
               key={event.id}
             >
@@ -106,10 +106,12 @@ export default async function HomePage() {
       </section>
 
       <SWRProvider fallback={{ [LIVE_KEY]: { source: provider.source, markets, snapshots, events } }}>
-        <div className="grid items-start gap-3.5 xl:grid-cols-[minmax(320px,0.95fr)_minmax(520px,1.7fr)_minmax(260px,0.75fr)]">
-          <LiveTapeLive events={events} />
+        <div className="grid items-start gap-3.5 grid-cols-1 xl:grid-cols-[1fr_320px]">
           <MarketsTableLive markets={markets} snapshots={snapshots} events={events} />
-          <WatchlistSidebar markets={markets} snapshots={snapshots} />
+          <div className="flex flex-col gap-3">
+            <LiveTapeLive events={events} />
+            <WatchlistSidebar markets={markets} snapshots={snapshots} />
+          </div>
         </div>
       </SWRProvider>
     </AppShell>

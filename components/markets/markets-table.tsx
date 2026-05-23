@@ -109,22 +109,22 @@ export function MarketsTable({ markets, snapshots, events }: MarketsTableProps) 
           <Table>
             <TableHeader>
               <TableRow className="border-border hover:bg-transparent">
-                <TableHead className="text-muted-foreground">Market</TableHead>
-                <TableHead className="text-muted-foreground">Primary probability</TableHead>
-                <TableHead className="text-muted-foreground">5m</TableHead>
-                <TableHead className="text-muted-foreground">15m</TableHead>
-                <TableHead className="text-muted-foreground">Spread</TableHead>
-                <TableHead className="text-muted-foreground">Depth</TableHead>
-                <TableHead className="text-muted-foreground">Expiry</TableHead>
-                <TableHead className="text-muted-foreground">Status</TableHead>
-                <TableHead className="text-muted-foreground">Watchlist</TableHead>
+                <TableHead className="min-w-[200px] text-muted-foreground">Market</TableHead>
+                <TableHead className="min-w-[130px] text-muted-foreground">Primary probability</TableHead>
+                <TableHead className="min-w-[60px] text-muted-foreground">5m</TableHead>
+                <TableHead className="min-w-[60px] text-muted-foreground">15m</TableHead>
+                <TableHead className="min-w-[80px] text-muted-foreground">Spread</TableHead>
+                <TableHead className="min-w-[80px] text-muted-foreground">Depth</TableHead>
+                <TableHead className="min-w-[120px] text-muted-foreground">Expiry</TableHead>
+                <TableHead className="min-w-[75px] text-muted-foreground">Status</TableHead>
+                <TableHead className="min-w-[55px] text-muted-foreground">Watchlist</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {orderedMarkets.map((market) => {
                 if (market.kind === "bucket") {
                   return (
-                    <TableRow key={market.id} className="border-border">
+                    <TableRow key={market.id} className="border-border hover:bg-accent/5">
                       <TableHead scope="row" className="font-normal">
                         <Link
                           className="block text-[13px] font-semibold text-foreground hover:text-primary"
@@ -163,7 +163,7 @@ export function MarketsTable({ markets, snapshots, events }: MarketsTableProps) 
                 const fifteenMinuteDelta = eventDelta(events, market.id, 900);
 
                 return (
-                  <TableRow key={market.id} className="border-border">
+                  <TableRow key={market.id} className="border-border hover:bg-accent/5">
                     <TableHead scope="row" className="font-normal">
                       <Link
                         className="block text-[13px] font-semibold text-foreground hover:text-primary"
