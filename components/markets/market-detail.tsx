@@ -168,10 +168,10 @@ function BucketMarketDetail({
           <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-chart-info">
             Market Detail
           </p>
-          <h1 id="market-heading" className="m-0 text-[28px] font-bold leading-[1.15]">
+          <h1 id="market-heading" className="m-0 text-[28px] font-medium tracking-wide leading-[1.15]">
             {market.name}
           </h1>
-          <div className="mt-2.5 flex flex-wrap gap-1.5" aria-label="Market metadata">
+          <div className="mt-2.5 flex flex-wrap items-center gap-1.5" aria-label="Market metadata">
             {[
               `Question ${market.questionId}`,
               `Underlying ${market.underlying ?? "unknown"}`,
@@ -272,10 +272,10 @@ function BinaryMarketDetail({ market, snapshots, events, sourceLabel }: BinaryMa
           <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-chart-info">
             Market Detail
           </p>
-          <h1 id="market-heading" className="m-0 text-[28px] font-bold leading-[1.15]">
+          <h1 id="market-heading" className="m-0 text-[28px] font-medium tracking-wide leading-[1.15]">
             {market.name}
           </h1>
-          <div className="mt-2.5 flex flex-wrap gap-1.5" aria-label="Market metadata">
+          <div className="mt-2.5 flex items-center flex-wrap gap-1.5" aria-label="Market metadata">
             {[
               `Outcome ${market.outcomeId}`,
               `Quote ${market.quoteToken ?? "unknown"}`,

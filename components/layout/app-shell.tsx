@@ -10,9 +10,9 @@ type AppShellProps = {
 export function AppShell({ children }: AppShellProps) {
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-10 flex min-h-[68px] flex-wrap items-center gap-4 border-b border-border bg-card/95 px-6 backdrop-blur-sm">
+      <header className="sticky top-0 z-10 flex min-h-17 flex-wrap items-center gap-3 border-b border-border bg-card/95 px-4 sm:gap-4 sm:px-6 backdrop-blur-sm">
         <Link className="flex shrink-0 items-center gap-2.5" href="/" aria-label="Hypertape home">
-          <span className="flex h-[34px] w-[34px] items-center justify-center rounded-lg border border-primary/30 bg-[#0b1714]">
+          <span className="flex size-8.5 items-center justify-center">
             <Image
               src="/assets/hypertape-logo.svg"
               alt=""
@@ -21,13 +21,15 @@ export function AppShell({ children }: AppShellProps) {
               priority
             />
           </span>
-          <Image
-            src="/assets/logo-text.svg"
-            alt="Hypertape"
-            width={140}
-            height={27}
-            priority
-          />
+          <span className="-mb-1">
+            <Image
+              src="/assets/logo-text.svg"
+              alt="Hypertape"
+              width={120}
+              height={20}
+              priority
+            />
+          </span>
         </Link>
 
         <nav className="flex items-center gap-1" aria-label="Primary navigation">
@@ -45,7 +47,7 @@ export function AppShell({ children }: AppShellProps) {
           </Link>
         </nav>
 
-        <label className="flex min-w-[220px] flex-1 cursor-not-allowed items-center gap-2 rounded-lg border border-border bg-[#0b0f15] px-3 py-2.5 text-muted-foreground opacity-[0.72]">
+        <label className="flex min-w-40 flex-1 cursor-not-allowed items-center gap-2 rounded-lg border border-border bg-[#0b0f15] px-3 py-2.5 text-muted-foreground opacity-[0.72] sm:min-w-[220px]">
           <Search size={16} aria-hidden="true" />
           <span className="sr-only">Search HIP-4 markets</span>
           <input
@@ -61,7 +63,7 @@ export function AppShell({ children }: AppShellProps) {
         </Button>
       </header>
 
-      <main className="mx-auto w-full max-w-[1680px] px-6 py-[22px] pb-9">
+      <main className="mx-auto w-full max-w-[1680px] px-4 py-5 pb-9 sm:px-6 sm:py-[22px]">
         {children}
       </main>
     </div>

@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/layout/app-shell";
-import { MarketsTableLive } from "@/components/markets/markets-table-live";
+import { MarketsGridLive } from "@/components/markets/markets-grid-live";
 import { SWRProvider } from "@/components/providers/swr-provider";
 import { getMarketDataProvider } from "@/lib/hyperliquid/provider";
 import { LIVE_KEY } from "@/lib/swr/types";
@@ -66,7 +66,7 @@ export default async function MarketsPage() {
       </section>
 
       <SWRProvider fallback={{ [LIVE_KEY]: { source: provider.source, markets, snapshots, events } }}>
-        <MarketsTableLive markets={markets} snapshots={snapshots} events={events} />
+        <MarketsGridLive markets={markets} snapshots={snapshots} events={events} />
       </SWRProvider>
     </AppShell>
   );

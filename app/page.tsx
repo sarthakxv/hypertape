@@ -64,21 +64,21 @@ export default async function HomePage() {
 
   return (
     <AppShell>
-      <section className="mb-4 flex items-end gap-4" aria-labelledby="command-heading">
+      <section className="mb-4 flex flex-col gap-2.5 sm:flex-row sm:items-end sm:gap-4" aria-labelledby="command-heading">
         <div>
           <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-chart-info">
             Movers Command Center
           </p>
-          <h1 id="command-heading" className="m-0 text-[28px] font-bold leading-[1.15]">
+          <h1 id="command-heading" className="m-0 text-[26px] font-medium leading-[1.15] sm:text-[28px]">
             Probability, spread, and depth moves
           </h1>
         </div>
-        <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-border bg-[#0c1118] px-2.5 py-1.5 text-xs text-[#b9c4d5]">
+        <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-border bg-[#0c1118] px-2.5 py-1.5 text-xs text-[#b9c4d5] sm:ml-auto">
           <SourcePill source={provider.source} />
         </span>
       </section>
 
-      <section
+      {movers.length > 0 && <section
         className="mb-4 grid grid-cols-1 gap-2.5 sm:grid-cols-3"
         aria-label="Largest market moves"
       >
@@ -103,7 +103,7 @@ export default async function HomePage() {
             </Link>
           );
         })}
-      </section>
+      </section>}
 
       <SWRProvider fallback={{ [LIVE_KEY]: { source: provider.source, markets, snapshots, events } }}>
         <div className="grid items-start gap-3.5 grid-cols-1 xl:grid-cols-[1fr_320px]">
