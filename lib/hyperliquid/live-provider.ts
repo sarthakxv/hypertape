@@ -7,11 +7,12 @@ import {
   type HyperliquidClient,
   type L2Book,
   type L2BookLevel,
+  type SpotAssetCtx,
   type TtlCache
 } from "./hyperliquid-client";
 import { buildMarketsFromOutcomeMeta } from "./normalize-outcome-meta";
 import type { MarketDataProvider } from "./provider";
-import type { BookLevel, Market, MarketCard, MarketSnapshot, TapeEvent } from "./types";
+import type { BookLevel, BucketMarket, Market, MarketCard, MarketSnapshot, TapeEvent } from "./types";
 
 function binaryMarkets(cards: MarketCard[]): Market[] {
   return cards.filter((card): card is Market => card.kind === "binary");
@@ -50,7 +51,30 @@ function primaryCoin(market: Market): string {
  * book. The dual mid is taken from allMids when available; dual best bid/ask stay
  * null (we only fetch the primary book). Empty books yield null quote/depth.
  */
-function buildCurrentSnapshot(market: Market, primaryBook: L2Book, allMids: AllMids): MarketSnapshot {
+function buildVolumeMap(ctxs: SpotAssetCtx[]): Map<string, number> {
+  return new Map(ctxs.map((c) => [c.coin, Number(c.dayNtlVlm)]));
+}
+
+function binaryMarketVolume(volMap: Map<string, number>, market: Market): number | null {
+  const total = market.sides.reduce((sum, side) => sum + (volMap.get(side.coin) ?? 0), 0);
+  return total > 0 ? total : null;
+}
+
+function bucketMarketVolume(volMap: Map<string, number>, market: BucketMarket): number | null {
+  const total = market.legs.reduce((sum, leg) => {
+    const yesVol = volMap.get(leg.yesCoin) ?? 0;
+    const noVol = volMap.get(`#${Number(leg.yesCoin.slice(1)) + 1}`) ?? 0;
+    return sum + yesVol + noVol;
+  }, 0);
+  return total > 0 ? total : null;
+}
+
+function buildCurrentSnapshot(
+  market: Market,
+  primaryBook: L2Book,
+  allMids: AllMids,
+  recentVolume: number | null = null
+): MarketSnapshot {
   const [rawBids, rawAsks] = primaryBook.levels;
   const bids = toBookLevels(rawBids);
   const asks = toBookLevels(rawAsks);
@@ -88,7 +112,7 @@ function buildCurrentSnapshot(market: Market, primaryBook: L2Book, allMids: AllM
     totalDepthOnePoint: oneBand?.totalDepth ?? null,
     totalDepthThreePoints: threeBand?.totalDepth ?? null,
     totalDepthFivePoints: fiveBand?.totalDepth ?? null,
-    recentVolume: null,
+    recentVolume,
     recentTradeCount: null,
     lastBookUpdateAt: primaryBook.time,
     lastTradeAt: null,
@@ -144,11 +168,21 @@ export function createLiveMarketDataProvider(options: LiveProviderOptions = {}):
     return cache.get(`l2Book:${coin}`, QUOTE_TTL_MS, () => client.fetchL2Book(coin));
   }
 
-  function fetchPrimaryCandlesCached(market: Market): Promise<Candle[]> {
-    const coin = primaryCoin(market);
+  function fetchCandlesCached(coin: string): Promise<Candle[]> {
     return cache.get(`candles:${coin}`, CANDLE_TTL_MS, () => {
       const endTime = now();
       return client.fetchCandles(coin, CANDLE_INTERVAL, endTime - CANDLE_LOOKBACK_MS, endTime);
+    });
+  }
+
+  function fetchPrimaryCandlesCached(market: Market): Promise<Candle[]> {
+    return fetchCandlesCached(primaryCoin(market));
+  }
+
+  function fetchSpotVolumeMapCached(): Promise<Map<string, number>> {
+    return cache.get("spotVolume", QUOTE_TTL_MS, async () => {
+      const [, ctxs] = await client.fetchSpotMetaAndAssetCtxs();
+      return buildVolumeMap(ctxs);
     });
   }
 
@@ -164,16 +198,37 @@ export function createLiveMarketDataProvider(options: LiveProviderOptions = {}):
   }
 
   async function getSnapshotsForMarket(market: Market): Promise<MarketSnapshot[]> {
-    const [candles, primaryBook, allMids] = await Promise.all([
-      fetchPrimaryCandlesCached(market),
-      fetchL2BookCached(primaryCoin(market)),
-      fetchAllMidsCached()
+    const coin = primaryCoin(market);
+    const [candles, primaryBook, allMids, volMap] = await Promise.all([
+      fetchCandlesCached(coin),
+      fetchL2BookCached(coin),
+      fetchAllMidsCached(),
+      fetchSpotVolumeMapCached(),
     ]);
 
     const history = candles.map((candle) => buildCandleSnapshot(market, candle));
-    const current = buildCurrentSnapshot(market, primaryBook, allMids);
+    const current = buildCurrentSnapshot(market, primaryBook, allMids, binaryMarketVolume(volMap, market));
 
     return [...history, current].sort((a, b) => a.timestamp - b.timestamp);
+  }
+
+  async function getBucketVolumeSnapshot(market: BucketMarket, volMap: Map<string, number>): Promise<MarketSnapshot> {
+    return {
+      marketId: market.id,
+      timestamp: now(),
+      primarySide: 0,
+      primaryBestBid: null, primaryBestAsk: null, primaryMid: null,
+      dualBestBid: null, dualBestAsk: null, dualMid: null,
+      canonicalSpread: null,
+      bidDepthOnePoint: null, askDepthOnePoint: null,
+      bidDepthThreePoints: null, askDepthThreePoints: null,
+      bidDepthFivePoints: null, askDepthFivePoints: null,
+      totalDepthOnePoint: null, totalDepthThreePoints: null, totalDepthFivePoints: null,
+      recentVolume: bucketMarketVolume(volMap, market),
+      recentTradeCount: null,
+      lastBookUpdateAt: null, lastTradeAt: null,
+      bids: [], asks: [],
+    };
   }
 
   async function getSnapshots(marketId?: string): Promise<MarketSnapshot[]> {
@@ -184,18 +239,29 @@ export function createLiveMarketDataProvider(options: LiveProviderOptions = {}):
       return getSnapshotsForMarket(market);
     }
 
-    const markets = binaryMarkets(await getMarkets());
-    const allMids = await fetchAllMidsCached();
-    const results = await mapWithConcurrency(markets, FAN_OUT_LIMIT, async (market) => {
-      try {
-        const primaryBook = await fetchL2BookCached(primaryCoin(market));
-        return buildCurrentSnapshot(market, primaryBook, allMids);
-      } catch {
-        // Isolate per-market failures so one bad market does not blank the list.
-        return null;
-      }
-    });
-    return results.filter((snapshot): snapshot is MarketSnapshot => snapshot !== null);
+    const allMarkets = await getMarkets();
+    const [allMids, volMap] = await Promise.all([fetchAllMidsCached(), fetchSpotVolumeMapCached()]);
+
+    const [binaryResults, bucketResults] = await Promise.all([
+      mapWithConcurrency(binaryMarkets(allMarkets), FAN_OUT_LIMIT, async (market) => {
+        try {
+          const primaryBook = await fetchL2BookCached(primaryCoin(market));
+          return buildCurrentSnapshot(market, primaryBook, allMids, binaryMarketVolume(volMap, market));
+        } catch {
+          return null;
+        }
+      }),
+      Promise.all(
+        allMarkets
+          .filter((m): m is BucketMarket => m.kind === "bucket")
+          .map((market) => getBucketVolumeSnapshot(market, volMap).catch(() => null))
+      ),
+    ]);
+
+    return [
+      ...binaryResults.filter((s): s is MarketSnapshot => s !== null),
+      ...bucketResults.filter((s): s is MarketSnapshot => s !== null),
+    ];
   }
 
   async function getTapeEventsForMarket(market: Market): Promise<TapeEvent[]> {

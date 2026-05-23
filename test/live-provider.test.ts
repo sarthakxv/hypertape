@@ -6,6 +6,7 @@ import type {
   HyperliquidClient,
   L2Book,
   RawOutcomeMetaResponse,
+  SpotAssetCtx,
   Trade
 } from "@/lib/hyperliquid/hyperliquid-client";
 import outcomeMeta from "./fixtures/hyperliquid/outcome-meta.json";
@@ -39,6 +40,9 @@ function createFakeClient(overrides: FakeClientOverrides = {}): HyperliquidClien
     },
     async fetchRecentTrades(): Promise<Trade[]> {
       return recentTrades800 as Trade[];
+    },
+    async fetchSpotMetaAndAssetCtxs(): Promise<[unknown, SpotAssetCtx[]]> {
+      return [{}, []];
     },
     ...overrides
   };
