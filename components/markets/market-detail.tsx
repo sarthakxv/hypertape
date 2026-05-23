@@ -28,14 +28,14 @@ type MarketDetailProps = {
   market: MarketCard;
   snapshots: MarketSnapshot[];
   events: TapeEvent[];
-  sourceLabel: string;
+  sourceLabel: React.ReactNode;
 };
 
 type BinaryMarketDetailProps = {
   market: Market;
   snapshots: MarketSnapshot[];
   events: TapeEvent[];
-  sourceLabel: string;
+  sourceLabel: React.ReactNode;
 };
 
 type DepthBand = {
@@ -156,7 +156,7 @@ function BucketMarketDetail({
   sourceLabel
 }: {
   market: BucketMarket;
-  sourceLabel: string;
+  sourceLabel: React.ReactNode;
 }) {
   return (
     <>
@@ -190,7 +190,7 @@ function BucketMarketDetail({
             </Badge>
           </div>
         </div>
-        <span className="ml-auto rounded-full border border-border bg-[#0c1118] px-2.5 py-1.5 text-xs text-[#b9c4d5]">
+        <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-border bg-[#0c1118] px-2.5 py-1.5 text-xs text-[#b9c4d5]">
           {sourceLabel}
         </span>
       </section>
@@ -294,7 +294,7 @@ function BinaryMarketDetail({ market, snapshots, events, sourceLabel }: BinaryMa
             </Badge>
           </div>
         </div>
-        <span className="ml-auto rounded-full border border-border bg-[#0c1118] px-2.5 py-1.5 text-xs text-[#b9c4d5]">
+        <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-border bg-[#0c1118] px-2.5 py-1.5 text-xs text-[#b9c4d5]">
           {sourceLabel}
         </span>
       </section>

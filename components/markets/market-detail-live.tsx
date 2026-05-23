@@ -9,7 +9,7 @@ type MarketDetailLiveProps = {
   market: MarketCard;
   snapshots: MarketSnapshot[];
   events: TapeEvent[];
-  sourceLabel: string;
+  sourceLabel: React.ReactNode;
 };
 
 export function MarketDetailLive({ market, snapshots, events, sourceLabel }: MarketDetailLiveProps) {

@@ -16,9 +16,19 @@ function isNotFoundError(error: unknown): boolean {
   return typeof error === "object" && error !== null && (error as { digest?: string }).digest === "NEXT_NOT_FOUND";
 }
 
-function sourceLabel(source: string): string {
-  if (source === "live") return "Source: live Hyperliquid";
-  return "Source: fixture tape";
+function SourcePill({ source }: { source: string }) {
+  const isLive = source === "live";
+  return (
+    <>
+      {isLive && (
+        <span className="relative flex size-2 shrink-0">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-chart-positive opacity-75" />
+          <span className="relative inline-flex size-2 rounded-full bg-chart-positive" />
+        </span>
+      )}
+      {isLive ? "live Hyperliquid" : "fixture tape"}
+    </>
+  );
 }
 
 export default async function MarketPage({ params }: MarketPageProps) {
@@ -60,7 +70,7 @@ export default async function MarketPage({ params }: MarketPageProps) {
           [marketDetailKey(market.id)]: { source: provider.source, market, snapshots, events }
         }}
       >
-        <MarketDetailLive market={market} snapshots={snapshots} events={events} sourceLabel={sourceLabel(provider.source)} />
+        <MarketDetailLive market={market} snapshots={snapshots} events={events} sourceLabel={<SourcePill source={provider.source} />} />
       </SWRProvider>
     </AppShell>
   );

@@ -11,9 +11,19 @@ import { Card } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 
-function sourceLabel(source: string): string {
-  if (source === "live") return "Source: live Hyperliquid";
-  return "Source: fixture tape";
+function SourcePill({ source }: { source: string }) {
+  const isLive = source === "live";
+  return (
+    <>
+      {isLive && (
+        <span className="relative flex size-2 shrink-0">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-chart-positive opacity-75" />
+          <span className="relative inline-flex size-2 rounded-full bg-chart-positive" />
+        </span>
+      )}
+      {isLive ? "live Hyperliquid" : "fixture tape"}
+    </>
+  );
 }
 
 function LiveDataUnavailable() {
@@ -63,8 +73,8 @@ export default async function HomePage() {
             Probability, spread, and depth moves
           </h1>
         </div>
-        <span className="ml-auto rounded-full border border-border bg-[#0c1118] px-2.5 py-1.5 text-xs text-[#b9c4d5]">
-          {sourceLabel(provider.source)}
+        <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-border bg-[#0c1118] px-2.5 py-1.5 text-xs text-[#b9c4d5]">
+          <SourcePill source={provider.source} />
         </span>
       </section>
 
