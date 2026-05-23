@@ -125,7 +125,7 @@ export function MarketsTable({ markets, snapshots, events }: MarketsTableProps) 
                 if (market.kind === "bucket") {
                   return (
                     <TableRow key={market.id} className="border-border hover:bg-accent/5">
-                      <TableHead scope="row" className="font-normal">
+                      <TableHead scope="row" className="h-auto py-3.5 font-normal">
                         <Link
                           className="block text-[13px] font-semibold text-foreground hover:text-primary"
                           href={`/markets/${market.id}`}
