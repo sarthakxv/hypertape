@@ -1,29 +1,18 @@
 "use client";
 
+import useSWR from "swr";
 import { LiveTape } from "@/components/tape/live-tape";
-import { useLiveData } from "@/lib/hooks/use-live-data";
+import { LIVE_KEY, type LiveResponse } from "@/lib/swr/types";
 import type { TapeEvent } from "@/lib/hyperliquid/types";
-
-const LIVE_REFRESH_MS = 3000;
-
-type TapeResponse = {
-  source: string;
-  events: TapeEvent[];
-  error?: string;
-};
 
 type LiveTapeLiveProps = {
   events: TapeEvent[];
 };
 
 export function LiveTapeLive({ events }: LiveTapeLiveProps) {
-  // Reject error envelopes that arrive with no events; the hook keeps last good.
-  const payload = useLiveData<TapeResponse>(
-    "/api/tape",
-    { source: "live", events },
-    LIVE_REFRESH_MS,
-    (p) => !(p.error && p.events.length === 0)
-  );
+  // Shares the `/api/live` key with MarketsTableLive — SWR dedupes the two into
+  // a single poll. Seeded from SWRProvider fallback; falls back to props.
+  const { data } = useSWR<LiveResponse>(LIVE_KEY);
 
-  return <LiveTape events={payload.events} />;
+  return <LiveTape events={data?.events ?? events} />;
 }

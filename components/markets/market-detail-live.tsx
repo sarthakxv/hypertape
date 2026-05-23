@@ -1,18 +1,9 @@
 "use client";
 
+import useSWR from "swr";
 import { MarketDetail } from "@/components/markets/market-detail";
-import { useLiveData } from "@/lib/hooks/use-live-data";
+import { marketDetailKey, type MarketDetailResponse } from "@/lib/swr/types";
 import type { MarketCard, MarketSnapshot, TapeEvent } from "@/lib/hyperliquid/types";
-
-const LIVE_REFRESH_MS = 3000;
-
-type MarketDetailResponse = {
-  source: string;
-  market: MarketCard | null;
-  snapshots: MarketSnapshot[];
-  events: TapeEvent[];
-  error?: string;
-};
 
 type MarketDetailLiveProps = {
   market: MarketCard;
@@ -22,19 +13,16 @@ type MarketDetailLiveProps = {
 };
 
 export function MarketDetailLive({ market, snapshots, events, sourceLabel }: MarketDetailLiveProps) {
-  // Reject error envelopes that arrive without a market; the hook keeps last good.
-  const payload = useLiveData<MarketDetailResponse>(
-    `/api/markets/${market.id}`,
-    { source: "live", market, snapshots, events },
-    LIVE_REFRESH_MS,
-    (p) => !(p.error && !p.market)
-  );
+  // Seeded from SWRProvider fallback; on a failed refresh the fetcher throws and
+  // SWR keeps the last good `data` rather than blanking the market.
+  const { data } = useSWR<MarketDetailResponse>(marketDetailKey(market.id));
+  const live = data ?? { source: "live", market, snapshots, events };
 
   return (
     <MarketDetail
-      market={payload.market ?? market}
-      snapshots={payload.snapshots}
-      events={payload.events}
+      market={live.market ?? market}
+      snapshots={live.snapshots}
+      events={live.events}
       sourceLabel={sourceLabel}
     />
   );

@@ -2,8 +2,10 @@ import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
 import { MarketsTableLive } from "@/components/markets/markets-table-live";
 import { WatchlistSidebar } from "@/components/markets/watchlist-sidebar";
+import { SWRProvider } from "@/components/providers/swr-provider";
 import { LiveTapeLive } from "@/components/tape/live-tape-live";
 import { getMarketDataProvider } from "@/lib/hyperliquid/provider";
+import { LIVE_KEY } from "@/lib/swr/types";
 import { formatPoints, formatProbability } from "@/lib/markets/probability";
 
 export const dynamic = "force-dynamic";
@@ -69,11 +71,13 @@ export default async function HomePage() {
         })}
       </section>
 
-      <div className="command-grid">
-        <LiveTapeLive events={events} />
-        <MarketsTableLive markets={markets} snapshots={snapshots} events={events} />
-        <WatchlistSidebar markets={markets} snapshots={snapshots} />
-      </div>
+      <SWRProvider fallback={{ [LIVE_KEY]: { source: provider.source, markets, snapshots, events } }}>
+        <div className="command-grid">
+          <LiveTapeLive events={events} />
+          <MarketsTableLive markets={markets} snapshots={snapshots} events={events} />
+          <WatchlistSidebar markets={markets} snapshots={snapshots} />
+        </div>
+      </SWRProvider>
     </AppShell>
   );
 }

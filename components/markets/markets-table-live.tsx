@@ -1,17 +1,9 @@
 "use client";
 
+import useSWR from "swr";
 import { MarketsTable } from "@/components/markets/markets-table";
-import { useLiveData } from "@/lib/hooks/use-live-data";
+import { LIVE_KEY, type LiveResponse } from "@/lib/swr/types";
 import type { MarketCard, MarketSnapshot, TapeEvent } from "@/lib/hyperliquid/types";
-
-const LIVE_REFRESH_MS = 3000;
-
-type MarketsResponse = {
-  source: string;
-  markets: MarketCard[];
-  snapshots: MarketSnapshot[];
-  error?: string;
-};
 
 type MarketsTableLiveProps = {
   markets: MarketCard[];
@@ -20,25 +12,10 @@ type MarketsTableLiveProps = {
 };
 
 export function MarketsTableLive({ markets, snapshots, events }: MarketsTableLiveProps) {
-  // Reject error envelopes that arrive with no markets; the hook keeps last good.
-  const marketsPayload = useLiveData<MarketsResponse>(
-    "/api/markets",
-    { source: "live", markets, snapshots },
-    LIVE_REFRESH_MS,
-    (payload) => !(payload.error && payload.markets.length === 0)
-  );
-  const tapePayload = useLiveData<{ source: string; events: TapeEvent[]; error?: string }>(
-    "/api/tape",
-    { source: "live", events },
-    LIVE_REFRESH_MS,
-    (payload) => !(payload.error && payload.events.length === 0)
-  );
+  // Seeded from SWRProvider fallback; `data` is defined on first paint. On a
+  // failed refresh the fetcher throws and SWR keeps the last good `data`.
+  const { data } = useSWR<LiveResponse>(LIVE_KEY);
+  const live = data ?? { source: "live", markets, snapshots, events };
 
-  return (
-    <MarketsTable
-      markets={marketsPayload.markets}
-      snapshots={marketsPayload.snapshots}
-      events={tapePayload.events}
-    />
-  );
+  return <MarketsTable markets={live.markets} snapshots={live.snapshots} events={live.events} />;
 }

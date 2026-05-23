@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { MarketDetailLive } from "@/components/markets/market-detail-live";
+import { SWRProvider } from "@/components/providers/swr-provider";
 import { getMarketDataProvider } from "@/lib/hyperliquid/provider";
+import { marketDetailKey } from "@/lib/swr/types";
 
 type MarketPageProps = {
   params: Promise<{ marketId: string }>;
@@ -48,7 +50,13 @@ export default async function MarketPage({ params }: MarketPageProps) {
 
   return (
     <AppShell>
-      <MarketDetailLive market={market} snapshots={snapshots} events={events} sourceLabel={sourceLabel(provider.source)} />
+      <SWRProvider
+        fallback={{
+          [marketDetailKey(market.id)]: { source: provider.source, market, snapshots, events }
+        }}
+      >
+        <MarketDetailLive market={market} snapshots={snapshots} events={events} sourceLabel={sourceLabel(provider.source)} />
+      </SWRProvider>
     </AppShell>
   );
 }

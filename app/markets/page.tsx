@@ -1,6 +1,8 @@
 import { AppShell } from "@/components/layout/app-shell";
 import { MarketsTableLive } from "@/components/markets/markets-table-live";
+import { SWRProvider } from "@/components/providers/swr-provider";
 import { getMarketDataProvider } from "@/lib/hyperliquid/provider";
+import { LIVE_KEY } from "@/lib/swr/types";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +44,9 @@ export default async function MarketsPage() {
         <span className="source-marker">{sourceLabel(provider.source)}</span>
       </section>
 
-      <MarketsTableLive markets={markets} snapshots={snapshots} events={events} />
+      <SWRProvider fallback={{ [LIVE_KEY]: { source: provider.source, markets, snapshots, events } }}>
+        <MarketsTableLive markets={markets} snapshots={snapshots} events={events} />
+      </SWRProvider>
     </AppShell>
   );
 }
