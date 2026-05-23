@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Bell, Search } from "lucide-react";
 
@@ -10,11 +11,22 @@ export function AppShell({ children }: AppShellProps) {
     <div className="app-shell">
       <header className="shell-header">
         <Link className="brand-lockup" href="/" aria-label="Hypertape home">
-          <span className="brand-mark">H</span>
-          <span>
-            <span className="brand-name">Hypertape</span>
-            <span className="brand-subtitle">HIP-4 probability tape</span>
+          <span className="brand-mark">
+            <Image
+              src="/assets/hypertape-logo.svg"
+              alt=""
+              width={20}
+              height={21}
+              priority
+            />
           </span>
+          <Image
+            src="/assets/logo-text.svg"
+            alt="Hypertape"
+            width={140}
+            height={27}
+            priority
+          />
         </Link>
 
         <nav className="shell-nav" aria-label="Primary navigation">

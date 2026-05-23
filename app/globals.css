@@ -101,22 +101,7 @@ button {
   font-weight: 800;
 }
 
-.brand-name,
-.brand-subtitle {
-  display: block;
-}
 
-.brand-name {
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0;
-}
-
-.brand-subtitle {
-  margin-top: 2px;
-  color: var(--muted);
-  font-size: 12px;
-}
 
 .shell-nav {
   gap: 8px;
