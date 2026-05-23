@@ -7,6 +7,7 @@ import { LiveTapeLive } from "@/components/tape/live-tape-live";
 import { getMarketDataProvider } from "@/lib/hyperliquid/provider";
 import { LIVE_KEY } from "@/lib/swr/types";
 import { formatPoints, formatProbability } from "@/lib/markets/probability";
+import { Card } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 
@@ -18,10 +19,14 @@ function sourceLabel(source: string): string {
 function LiveDataUnavailable() {
   return (
     <AppShell>
-      <section className="panel empty-state" aria-labelledby="unavailable-heading">
-        <h1 id="unavailable-heading">Live data unavailable</h1>
-        <span>We could not reach Hyperliquid right now. Try again shortly.</span>
-      </section>
+      <Card className="px-6 py-8" aria-labelledby="unavailable-heading">
+        <h1 id="unavailable-heading" className="m-0 text-[28px] font-bold leading-[1.15]">
+          Live data unavailable
+        </h1>
+        <span className="mt-2 block text-sm text-muted-foreground">
+          We could not reach Hyperliquid right now. Try again shortly.
+        </span>
+      </Card>
     </AppShell>
   );
 }
@@ -49,30 +54,49 @@ export default async function HomePage() {
 
   return (
     <AppShell>
-      <section className="command-header" aria-labelledby="command-heading">
+      <section className="mb-4 flex items-end gap-4" aria-labelledby="command-heading">
         <div>
-          <p className="eyebrow">Movers Command Center</p>
-          <h1 id="command-heading">Probability, spread, and depth moves</h1>
+          <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-chart-info">
+            Movers Command Center
+          </p>
+          <h1 id="command-heading" className="m-0 text-[28px] font-bold leading-[1.15]">
+            Probability, spread, and depth moves
+          </h1>
         </div>
-        <span className="source-marker">{sourceLabel(provider.source)}</span>
+        <span className="ml-auto rounded-full border border-border bg-[#0c1118] px-2.5 py-1.5 text-xs text-[#b9c4d5]">
+          {sourceLabel(provider.source)}
+        </span>
       </section>
 
-      <section className="movers-strip" aria-label="Largest market moves">
+      <section
+        className="mb-4 grid grid-cols-1 gap-2.5 sm:grid-cols-3"
+        aria-label="Largest market moves"
+      >
         {movers.map((event) => {
           const market = marketsById.get(event.marketId);
 
           return (
-            <Link className="mover-tile" href={`/markets/${event.marketId}`} key={event.id}>
-              <span>{market?.name ?? event.title}</span>
-              <strong>{event.delta == null ? formatProbability(event.currentProbability ?? null) : formatPoints(event.delta * 100)}</strong>
-              <small>{event.summary}</small>
+            <Link
+              className="min-w-0 rounded-md border border-border bg-[#0d1219] p-3 transition-colors hover:border-primary/40"
+              href={`/markets/${event.marketId}`}
+              key={event.id}
+            >
+              <span className="block overflow-hidden text-[13px] font-bold text-foreground/80 text-ellipsis whitespace-nowrap">
+                {market?.name ?? event.title}
+              </span>
+              <strong className="mt-2 block text-[22px] font-bold text-chart-positive">
+                {event.delta == null ? formatProbability(event.currentProbability ?? null) : formatPoints(event.delta * 100)}
+              </strong>
+              <small className="mt-1 line-clamp-2 block min-h-8 text-xs leading-[1.35] text-muted-foreground">
+                {event.summary}
+              </small>
             </Link>
           );
         })}
       </section>
 
       <SWRProvider fallback={{ [LIVE_KEY]: { source: provider.source, markets, snapshots, events } }}>
-        <div className="command-grid">
+        <div className="grid items-start gap-3.5 xl:grid-cols-[minmax(320px,0.95fr)_minmax(520px,1.7fr)_minmax(260px,0.75fr)]">
           <LiveTapeLive events={events} />
           <MarketsTableLive markets={markets} snapshots={snapshots} events={events} />
           <WatchlistSidebar markets={markets} snapshots={snapshots} />
