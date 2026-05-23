@@ -4,6 +4,7 @@ import { MarketDetailLive } from "@/components/markets/market-detail-live";
 import { SWRProvider } from "@/components/providers/swr-provider";
 import { getMarketDataProvider } from "@/lib/hyperliquid/provider";
 import { marketDetailKey } from "@/lib/swr/types";
+import { Card } from "@/components/ui/card";
 
 type MarketPageProps = {
   params: Promise<{ marketId: string }>;
@@ -40,10 +41,14 @@ export default async function MarketPage({ params }: MarketPageProps) {
     if (isNotFoundError(error)) throw error;
     return (
       <AppShell>
-        <section className="panel empty-state" aria-labelledby="market-unavailable-heading">
-          <h1 id="market-unavailable-heading">Live data unavailable</h1>
-          <span>We could not reach Hyperliquid right now. Try again shortly.</span>
-        </section>
+        <Card className="px-6 py-8" aria-labelledby="market-unavailable-heading">
+          <h1 id="market-unavailable-heading" className="m-0 text-[28px] font-bold leading-[1.15]">
+            Live data unavailable
+          </h1>
+          <span className="mt-2 block text-sm text-muted-foreground">
+            We could not reach Hyperliquid right now. Try again shortly.
+          </span>
+        </Card>
       </AppShell>
     );
   }
