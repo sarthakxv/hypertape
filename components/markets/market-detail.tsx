@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Bell, Clock, Database, Info, Layers, Radio, SlidersHorizontal } from "lucide-react";
 import { ProbabilityChart } from "@/components/charts/probability-chart";
 import { LiveTape } from "@/components/tape/live-tape";
@@ -10,19 +11,32 @@ import type {
   TapeEvent
 } from "@/lib/hyperliquid/types";
 import { formatPoints, formatProbability } from "@/lib/markets/probability";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 type MarketDetailProps = {
   market: MarketCard;
   snapshots: MarketSnapshot[];
   events: TapeEvent[];
-  sourceLabel: string;
+  sourceLabel: React.ReactNode;
 };
 
 type BinaryMarketDetailProps = {
   market: Market;
   snapshots: MarketSnapshot[];
   events: TapeEvent[];
-  sourceLabel: string;
+  sourceLabel: React.ReactNode;
 };
 
 type DepthBand = {
@@ -30,6 +44,12 @@ type DepthBand = {
   bidDepth: number | null;
   askDepth: number | null;
   totalDepth: number | null;
+};
+
+const statusClass: Record<string, string> = {
+  active: "border-chart-positive/25 bg-chart-positive/10 text-chart-positive",
+  settling: "border-chart-warning/25 bg-chart-warning/10 text-chart-warning",
+  settled: "border-border bg-muted text-muted-foreground",
 };
 
 function compactCurrency(value: number | null | undefined): string {
@@ -106,62 +126,123 @@ function bucketLegWidth(probability: number | null): string {
   return `${Math.max(0, Math.min(100, Math.round(probability * 100)))}%`;
 }
 
+function isBtc(underlying: string | undefined): boolean {
+  if (!underlying) return false;
+  const u = underlying.toLowerCase();
+  return u === "btc" || u === "bitcoin";
+}
+
+function PanelHeader({
+  eyebrow,
+  title,
+  headingId,
+  icon,
+}: {
+  eyebrow: string;
+  title: string;
+  headingId: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0 border-b border-border pb-3">
+      <div>
+        <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-chart-info">
+          {eyebrow}
+        </p>
+        <h2 id={headingId} className="m-0 text-[17px] font-semibold leading-[1.2]">
+          {title}
+        </h2>
+      </div>
+      <span className="text-muted-foreground">{icon}</span>
+    </CardHeader>
+  );
+}
+
 function BucketMarketDetail({
   market,
   sourceLabel
 }: {
   market: BucketMarket;
-  sourceLabel: string;
+  sourceLabel: React.ReactNode;
 }) {
   return (
     <>
-      <section className="command-header market-command-header" aria-labelledby="market-heading">
-        <div>
-          <p className="eyebrow">Market Detail</p>
-          <h1 id="market-heading">{market.name}</h1>
-          <div className="market-header-meta" aria-label="Market metadata">
-            <span>Question {market.questionId}</span>
-            <span>Underlying {market.underlying ?? "unknown"}</span>
-            <span>Period {market.period ?? "unknown"}</span>
-            <span>Expiry {formatExpiry(market.expiryTime)}</span>
-            <span className={`status-pill status-${market.status}`}>{market.status}</span>
+      <section
+        className="mb-4 flex items-start gap-4"
+        aria-labelledby="market-heading"
+      >
+        <div className="flex-1">
+          <div className="flex flex-col items-start gap-3">
+              <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-chart-info">
+                Market Detail
+              </p>
+              <div className="inline-flex items-center gap-2.5">
+                {isBtc(market.underlying) && (
+                  <Image
+                    src="/icons/bitcoin.png"
+                    alt="BTC"
+                    width={40}
+                    height={40}
+                    className="mt-0 shrink-0 rounded-full"
+                  />
+                )}
+                <h1 id="market-heading" className="m-0 text-[28px] font-medium tracking-wide leading-[1.15]">
+                    {market.name}
+                </h1>
+              </div>
+          </div>
+          <div className="mt-2.5 flex flex-wrap items-center gap-1.5" aria-label="Market metadata">
+            {[
+              `Underlying ${market.underlying ?? "unknown"}`,
+              `Expiry ${formatExpiry(market.expiryTime)}`,
+            ].map((label) => (
+              <span
+                key={label}
+                className="inline-flex min-h-6 items-center rounded-md border border-border bg-[#0b0f15] px-1.5 py-1 text-xs text-[#b9c4d5]"
+              >
+                {label}
+              </span>
+            ))}
+            <Badge variant="outline" className={cn("text-[8px] font-black uppercase tracking-[0.07em]", statusClass[market.status])}>
+              {market.status}
+            </Badge>
           </div>
         </div>
-        <span className="source-marker">{sourceLabel}</span>
+        <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-border bg-[#0c1118] px-2.5 py-1.5 text-xs text-[#b9c4d5]">
+          {sourceLabel}
+        </span>
       </section>
 
-      <section className="panel" aria-labelledby="bucket-outcomes-heading">
-        <div className="panel-heading">
-          <div>
-            <p className="eyebrow">Outcomes</p>
-            <h2 id="bucket-outcomes-heading">Bucket probabilities</h2>
-          </div>
-          <Layers size={17} aria-hidden="true" />
-        </div>
-        <ul className="bucket-outcome-list">
-          {market.legs.map((leg) => (
-            <li key={leg.outcomeId}>
-              <div className="bucket-outcome-row">
-                <span>{leg.label}</span>
-                <strong>{bucketLegPercent(leg.probability)}</strong>
-              </div>
-              <div className="bucket-outcome-bar" aria-hidden="true">
-                <span style={{ width: bucketLegWidth(leg.probability) }} />
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <Card className="max-w-2xl" aria-labelledby="bucket-outcomes-heading">
+        <PanelHeader
+          eyebrow="Outcomes"
+          title="Bucket probabilities"
+          headingId="bucket-outcomes-heading"
+          icon={<Layers size={17} aria-hidden="true" />}
+        />
+        <CardContent className="p-0">
+          <ul className="divide-y divide-border">
+            {market.legs.map((leg) => (
+              <li key={leg.outcomeId} className="px-4 py-3">
+                <div className="flex items-baseline justify-between">
+                  <span className="text-sm text-foreground">{leg.label}</span>
+                  <strong className="text-sm font-bold text-foreground">{bucketLegPercent(leg.probability)}</strong>
+                </div>
+                <div
+                  className="mt-2 h-1.5 overflow-hidden rounded-full bg-primary/20"
+                  aria-hidden="true"
+                >
+                  <span
+                    className="block h-full rounded-full bg-primary transition-all"
+                    style={{ width: bucketLegWidth(leg.probability) }}
+                  />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
     </>
-  );
-}
-
-export function MarketDetail({ market, snapshots, events, sourceLabel }: MarketDetailProps) {
-  if (market.kind === "bucket") {
-    return <BucketMarketDetail market={market} sourceLabel={sourceLabel} />;
-  }
-  return (
-    <BinaryMarketDetail market={market} snapshots={snapshots} events={events} sourceLabel={sourceLabel} />
   );
 }
 
@@ -192,209 +273,280 @@ function BinaryMarketDetail({ market, snapshots, events, sourceLabel }: BinaryMa
 
   return (
     <>
-      <section className="command-header market-command-header" aria-labelledby="market-heading">
-        <div>
-          <p className="eyebrow">Market Detail</p>
-          <h1 id="market-heading">{market.name}</h1>
-          <div className="market-header-meta" aria-label="Market metadata">
-            <span>Outcome {market.outcomeId}</span>
-            <span>Quote {market.quoteToken ?? "unknown"}</span>
-            <span>Expiry {formatExpiry(market.expiryTime)}</span>
-            <span className={`status-pill status-${market.status}`}>{market.status}</span>
-            <span>{market.statusSource} status</span>
+      <section
+        className="mb-4 flex items-start gap-4"
+        aria-labelledby="market-heading"
+      >
+        <div className="flex-1">
+          <div className="flex flex-col items-start gap-3">
+              <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-chart-info">
+                Market Detail
+            </p>
+            <div className="flex items-center gap-2.5">
+              {isBtc(market.underlying) && (
+                <Image
+                  src="/icons/bitcoin.png"
+                  alt="BTC"
+                  width={40}
+                  height={40}
+                  className="mt-0.5 shrink-0 rounded-full"
+                />
+              )}
+                <h1 id="market-heading" className="m-0 text-[28px] font-medium tracking-wide leading-[1.15]">
+                  {market.name}
+                </h1>
+            </div>
+          </div>
+          <div className="mt-2.5 flex items-center flex-wrap gap-1.5" aria-label="Market metadata">
+            {[
+              market.quoteToken ? `Quote ${market.quoteToken}` : null,
+              `Expiry ${formatExpiry(market.expiryTime)}`,
+            ].filter(Boolean).map((label) => (
+              <span
+                key={label}
+                className="inline-flex min-h-6 items-center rounded-md border border-border bg-[#0b0f15] px-1.5 py-1 text-xs text-[#b9c4d5]"
+              >
+                {label}
+              </span>
+            ))}
+            <Badge variant="outline" className={cn("text-[8px] font-black uppercase tracking-[0.07em]", statusClass[market.status])}>
+              {market.status}
+            </Badge>
           </div>
         </div>
-        <span className="source-marker">{sourceLabel}</span>
+        <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-border bg-[#0c1118] px-2.5 py-1.5 text-xs text-[#b9c4d5]">
+          {sourceLabel}
+        </span>
       </section>
 
-      <section className="market-stat-grid" aria-label="Current probabilities and book">
-        <article className="mover-tile">
-          <span>{primaryLabel} probability</span>
-          <strong>{formatProbability(latest?.primaryMid ?? null)}</strong>
-          <small>Bid {formatProbability(latest?.primaryBestBid ?? null)} / Ask {formatProbability(latest?.primaryBestAsk ?? null)}</small>
-        </article>
-        <article className="mover-tile">
-          <span>{dualLabel} probability</span>
-          <strong>{formatProbability(latest?.dualMid ?? null)}</strong>
-          <small>Bid {formatProbability(latest?.dualBestBid ?? null)} / Ask {formatProbability(latest?.dualBestAsk ?? null)}</small>
-        </article>
-        <article className="mover-tile">
-          <span>Spread</span>
-          <strong>{latest?.canonicalSpread == null ? "-" : formatPoints(latest.canonicalSpread * 100)}</strong>
-          <small>Canonical bid/ask across the primary book.</small>
-        </article>
-        <article className="mover-tile">
-          <span>Liquidity</span>
-          <strong>{compactCurrency(latest?.totalDepthThreePoints)}</strong>
-          <small>Depth inside 3 probability points.</small>
-        </article>
+      {/* Stat tiles */}
+      <section
+        className="mb-3.5 grid grid-cols-1 gap-2.5 md:grid-cols-4"
+        aria-label="Current probabilities and book"
+      >
+        {[
+          {
+            label: `${primaryLabel} probability`,
+            value: formatProbability(latest?.primaryMid ?? null),
+            sub: `Bid ${formatProbability(latest?.primaryBestBid ?? null)} / Ask ${formatProbability(latest?.primaryBestAsk ?? null)}`
+          },
+          {
+            label: `${dualLabel} probability`,
+            value: formatProbability(latest?.dualMid ?? null),
+            sub: `Bid ${formatProbability(latest?.dualBestBid ?? null)} / Ask ${formatProbability(latest?.dualBestAsk ?? null)}`
+          },
+          {
+            label: "Spread",
+            value: latest?.canonicalSpread == null ? "-" : formatPoints(latest.canonicalSpread * 100),
+            sub: "Canonical bid/ask across the primary book."
+          },
+          {
+            label: "Liquidity",
+            value: compactCurrency(latest?.totalDepthThreePoints),
+            sub: "Depth inside 3 probability points."
+          },
+        ].map((tile) => (
+          <article
+            key={tile.label}
+            className="min-w-0 rounded-md border border-border bg-[#0d1219] p-3"
+          >
+            <span className="block overflow-hidden text-[13px] font-bold text-foreground/80 text-ellipsis whitespace-nowrap">
+              {tile.label}
+            </span>
+            <strong className="mt-2 block text-[22px] font-bold text-chart-positive">
+              {tile.value}
+            </strong>
+            <small className="mt-1 line-clamp-2 block min-h-8 text-xs leading-[1.35] text-muted-foreground">
+              {tile.sub}
+            </small>
+          </article>
+        ))}
       </section>
 
-      <div className="market-detail-grid">
-        <section className="panel market-chart-panel" aria-labelledby="probability-history-heading">
-          <div className="panel-heading">
-            <div>
-              <p className="eyebrow">Probability</p>
-              <h2 id="probability-history-heading">Primary-side history</h2>
-            </div>
-            <Radio size={17} aria-hidden="true" />
-          </div>
-          <ProbabilityChart snapshots={snapshots} />
-        </section>
+      {/* Chart + orderbook grid */}
+      <div className="mb-3.5 grid items-start gap-3.5 md:grid-cols-[minmax(420px,1.2fr)_minmax(360px,0.8fr)]">
+        <Card className="overflow-hidden" aria-labelledby="probability-history-heading">
+          <PanelHeader
+            eyebrow="Probability"
+            title="Primary-side history"
+            headingId="probability-history-heading"
+            icon={<Radio size={17} aria-hidden="true" />}
+          />
+          <CardContent className="p-0">
+            <ProbabilityChart snapshots={snapshots} />
+          </CardContent>
+        </Card>
 
-        <section className="panel" aria-labelledby="book-heading">
-          <div className="panel-heading">
-            <div>
-              <p className="eyebrow">Book</p>
-              <h2 id="book-heading">Canonical orderbook</h2>
+        <Card aria-labelledby="book-heading">
+          <PanelHeader
+            eyebrow="Book"
+            title="Canonical orderbook"
+            headingId="book-heading"
+            icon={<Database size={17} aria-hidden="true" />}
+          />
+          <CardContent className="p-0">
+            <div className="table-scroll">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border hover:bg-transparent">
+                    <TableHead className="text-muted-foreground">Bid size</TableHead>
+                    <TableHead className="text-muted-foreground">Bid probability</TableHead>
+                    <TableHead className="text-muted-foreground">Ask probability</TableHead>
+                    <TableHead className="text-muted-foreground">Ask size</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {latest && orderbookRows(latest.bids, latest.asks).length > 0 ? (
+                    orderbookRows(latest.bids, latest.asks).map((row, index) => (
+                      <TableRow
+                        key={`${row.bid?.price ?? "empty"}-${row.ask?.price ?? "empty"}-${index}`}
+                        className="border-border"
+                      >
+                        <TableCell>{row.bid?.size.toLocaleString("en-US") ?? "-"}</TableCell>
+                        <TableCell className="text-chart-positive">
+                          {formatProbability(row.bid?.price ?? null)}
+                        </TableCell>
+                        <TableCell className="text-chart-negative">
+                          {formatProbability(row.ask?.price ?? null)}
+                        </TableCell>
+                        <TableCell>{row.ask?.size.toLocaleString("en-US") ?? "-"}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow className="border-border">
+                      <TableCell colSpan={4}>No book levels published.</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
             </div>
-            <Database size={17} aria-hidden="true" />
-          </div>
-          <div className="table-scroll">
-            <table className="markets-table orderbook-table">
-              <thead>
-                <tr>
-                  <th scope="col">Bid size</th>
-                  <th scope="col">Bid probability</th>
-                  <th scope="col">Ask probability</th>
-                  <th scope="col">Ask size</th>
-                </tr>
-              </thead>
-              <tbody>
-                {latest && orderbookRows(latest.bids, latest.asks).length > 0 ? (
-                  orderbookRows(latest.bids, latest.asks).map((row, index) => (
-                    <tr key={`${row.bid?.price ?? "empty"}-${row.ask?.price ?? "empty"}-${index}`}>
-                      <td>{row.bid?.size.toLocaleString("en-US") ?? "-"}</td>
-                      <td className="metric-up">{formatProbability(row.bid?.price ?? null)}</td>
-                      <td className="metric-down">{formatProbability(row.ask?.price ?? null)}</td>
-                      <td>{row.ask?.size.toLocaleString("en-US") ?? "-"}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={4}>No book levels published.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
+          </CardContent>
+        </Card>
       </div>
 
-      <section className="depth-grid" aria-label="Depth bands">
+      {/* Depth bands */}
+      <section
+        className="mb-3.5 grid grid-cols-1 gap-2.5 md:grid-cols-3"
+        aria-label="Depth bands"
+      >
         {depthBands.map((band) => (
-          <article className="depth-tile" key={band.label}>
-            <div>
-              <span>{band.label}</span>
-              <strong>{fullCurrency(band.totalDepth)}</strong>
+          <article
+            key={band.label}
+            className="min-w-0 rounded-md border border-border bg-[#0d1219] p-3"
+          >
+            <div className="flex items-baseline justify-between gap-2.5">
+              <span className="text-[11px] font-bold uppercase text-[#7f8b9e]">{band.label}</span>
+              <strong className="text-[17px] font-bold text-chart-positive">{fullCurrency(band.totalDepth)}</strong>
             </div>
-            <dl>
+            <dl className="mt-3 grid grid-cols-2 gap-2">
               <div>
-                <dt>Bid depth</dt>
-                <dd>{fullCurrency(band.bidDepth)}</dd>
+                <dt className="text-[11px] font-bold uppercase text-[#7f8b9e]">Bid depth</dt>
+                <dd className="mt-1 text-xs font-bold text-[#dfe8f6]">{fullCurrency(band.bidDepth)}</dd>
               </div>
               <div>
-                <dt>Ask depth</dt>
-                <dd>{fullCurrency(band.askDepth)}</dd>
+                <dt className="text-[11px] font-bold uppercase text-[#7f8b9e]">Ask depth</dt>
+                <dd className="mt-1 text-xs font-bold text-[#dfe8f6]">{fullCurrency(band.askDepth)}</dd>
               </div>
             </dl>
           </article>
         ))}
       </section>
 
-      <div className="market-secondary-grid">
+      {/* Tape + local alert draft */}
+      <div className="mb-3.5 grid items-start gap-3.5 md:grid-cols-[minmax(420px,1fr)_minmax(320px,0.72fr)]">
         <LiveTape events={events} />
 
-        <section className="panel local-alert-panel" aria-labelledby="market-alert-heading">
-          <div className="panel-heading">
-            <div>
-              <p className="eyebrow">Alerts</p>
-              <h2 id="market-alert-heading">Local draft</h2>
-            </div>
-            <Bell size={17} aria-hidden="true" />
-          </div>
-          <div className="alert-draft">
-            <label>
+        <Card aria-labelledby="market-alert-heading">
+          <PanelHeader
+            eyebrow="Alerts"
+            title="Local draft"
+            headingId="market-alert-heading"
+            icon={<Bell size={17} aria-hidden="true" />}
+          />
+          <CardContent className="grid gap-3 p-4">
+            <label className="grid gap-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
               Scope
-              <select defaultValue="market">
+              <select
+                defaultValue="market"
+                className="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-1 focus:ring-ring"
+              >
                 <option value="market">This market</option>
                 <option value="watchlist">Watchlist</option>
               </select>
             </label>
-            <label>
+            <label className="grid gap-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
               Move threshold
-              <input type="number" min="1" max="50" defaultValue="5" />
+              <Input type="number" min="1" max="50" defaultValue="5" />
             </label>
-            <label>
+            <label className="grid gap-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
               Window
-              <select defaultValue="900">
+              <select
+                defaultValue="900"
+                className="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-1 focus:ring-ring"
+              >
                 <option value="300">5 minutes</option>
                 <option value="900">15 minutes</option>
                 <option value="1800">30 minutes</option>
               </select>
             </label>
-            <button type="button" disabled>
+            <Button type="button" variant="outline" disabled className="cursor-not-allowed opacity-70">
               Telegram delivery disabled
-            </button>
-            <p>Draft only. No backend delivery is enabled for Telegram.</p>
-          </div>
-        </section>
+            </Button>
+            <p className="m-0 text-xs text-muted-foreground">
+              Draft only. No backend delivery is enabled for Telegram.
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
-      <section className="panel debug-panel" aria-labelledby="debug-heading">
-        <div className="panel-heading">
-          <div>
-            <p className="eyebrow">Builder</p>
-            <h2 id="debug-heading">Outcome metadata</h2>
+      {/* Debug / metadata panel */}
+      <Card aria-labelledby="debug-heading">
+        <PanelHeader
+          eyebrow="Builder"
+          title="Outcome metadata"
+          headingId="debug-heading"
+          icon={<SlidersHorizontal size={17} aria-hidden="true" />}
+        />
+        <CardContent className="p-0">
+          <dl className="grid grid-cols-2 gap-px bg-border md:grid-cols-4">
+            {[
+              { label: "Outcome ID", value: market.outcomeId },
+              { label: "Side labels", value: market.sides.map((side) => side.label).join(" / ") },
+              { label: "Encodings", value: market.sides.map((side) => side.encoding).join(" / ") },
+              { label: "Spot coins", value: market.sides.map((side) => side.coin).join(" / ") },
+              { label: "Token names", value: market.sides.map((side) => side.tokenName).join(" / ") },
+              { label: "Asset IDs", value: market.sides.map((side) => side.assetId).join(" / ") },
+              { label: "Quote token", value: market.quoteToken ?? "unknown" },
+              { label: "Last book", value: formatTimestamp(latest?.lastBookUpdateAt) },
+            ].map((item) => (
+              <div key={item.label} className="bg-card p-3">
+                <dt className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{item.label}</dt>
+                <dd className="mt-1 text-sm text-foreground">{item.value}</dd>
+              </div>
+            ))}
+          </dl>
+          <details className="group border-t border-border">
+            <summary className="flex cursor-pointer items-center gap-2 px-4 py-3 text-sm text-muted-foreground hover:text-foreground">
+              <Info size={15} aria-hidden="true" />
+              Raw metadata
+            </summary>
+            <pre className="overflow-x-auto px-4 pb-4 text-xs text-muted-foreground">{rawMetadata(market.raw)}</pre>
+          </details>
+          <div className="flex items-center gap-2 border-t border-border px-4 py-2 text-xs text-muted-foreground">
+            <Clock size={15} aria-hidden="true" />
+            Snapshot {formatTimestamp(latest?.timestamp)}
           </div>
-          <SlidersHorizontal size={17} aria-hidden="true" />
-        </div>
-        <dl className="debug-grid">
-          <div>
-            <dt>Outcome ID</dt>
-            <dd>{market.outcomeId}</dd>
-          </div>
-          <div>
-            <dt>Side labels</dt>
-            <dd>{market.sides.map((side) => side.label).join(" / ")}</dd>
-          </div>
-          <div>
-            <dt>Encodings</dt>
-            <dd>{market.sides.map((side) => side.encoding).join(" / ")}</dd>
-          </div>
-          <div>
-            <dt>Spot coins</dt>
-            <dd>{market.sides.map((side) => side.coin).join(" / ")}</dd>
-          </div>
-          <div>
-            <dt>Token names</dt>
-            <dd>{market.sides.map((side) => side.tokenName).join(" / ")}</dd>
-          </div>
-          <div>
-            <dt>Asset IDs</dt>
-            <dd>{market.sides.map((side) => side.assetId).join(" / ")}</dd>
-          </div>
-          <div>
-            <dt>Quote token</dt>
-            <dd>{market.quoteToken ?? "unknown"}</dd>
-          </div>
-          <div>
-            <dt>Last book</dt>
-            <dd>{formatTimestamp(latest?.lastBookUpdateAt)}</dd>
-          </div>
-        </dl>
-        <details className="raw-metadata">
-          <summary>
-            <Info size={15} aria-hidden="true" />
-            Raw metadata
-          </summary>
-          <pre>{rawMetadata(market.raw)}</pre>
-        </details>
-        <div className="debug-footer">
-          <Clock size={15} aria-hidden="true" />
-          Snapshot {formatTimestamp(latest?.timestamp)}
-        </div>
-      </section>
+        </CardContent>
+      </Card>
     </>
+  );
+}
+
+export function MarketDetail({ market, snapshots, events, sourceLabel }: MarketDetailProps) {
+  if (market.kind === "bucket") {
+    return <BucketMarketDetail market={market} sourceLabel={sourceLabel} />;
+  }
+  return (
+    <BinaryMarketDetail market={market} snapshots={snapshots} events={events} sourceLabel={sourceLabel} />
   );
 }

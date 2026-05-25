@@ -68,12 +68,18 @@ export type HyperliquidClientOptions = {
   now?: () => number;
 };
 
+export type SpotAssetCtx = {
+  coin: string;
+  dayNtlVlm: string;
+};
+
 export type HyperliquidClient = {
   fetchOutcomeMeta(): Promise<RawOutcomeMetaResponse>;
   fetchAllMids(): Promise<AllMids>;
   fetchL2Book(coin: string): Promise<L2Book>;
   fetchCandles(coin: string, interval: string, startTime: number, endTime: number): Promise<Candle[]>;
   fetchRecentTrades(coin: string): Promise<Trade[]>;
+  fetchSpotMetaAndAssetCtxs(): Promise<[unknown, SpotAssetCtx[]]>;
 };
 
 export function createHyperliquidClient(options: HyperliquidClientOptions = {}): HyperliquidClient {
@@ -112,6 +118,9 @@ export function createHyperliquidClient(options: HyperliquidClientOptions = {}):
     },
     fetchRecentTrades(coin: string) {
       return postInfo<Trade[]>({ type: "recentTrades", coin });
+    },
+    fetchSpotMetaAndAssetCtxs() {
+      return postInfo<[unknown, SpotAssetCtx[]]>({ type: "spotMetaAndAssetCtxs" });
     }
   };
 }

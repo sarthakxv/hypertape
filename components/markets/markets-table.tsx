@@ -2,11 +2,28 @@ import Link from "next/link";
 import type { MarketCard, MarketSnapshot, TapeEvent } from "@/lib/hyperliquid/types";
 import { formatPoints, formatProbability } from "@/lib/markets/probability";
 import { WatchlistStar } from "@/components/markets/watchlist-star";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 type MarketsTableProps = {
   markets: MarketCard[];
   snapshots: MarketSnapshot[];
   events: TapeEvent[];
+};
+
+const statusClass: Record<string, string> = {
+  active: "border-chart-positive/25 bg-chart-positive/10 text-chart-positive",
+  settling: "border-chart-warning/25 bg-chart-warning/10 text-chart-warning",
+  settled: "border-border bg-muted text-muted-foreground",
 };
 
 function formatLegPercent(probability: number | null): string {
@@ -73,97 +90,118 @@ export function MarketsTable({ markets, snapshots, events }: MarketsTableProps) 
   });
 
   return (
-    <section className="panel markets-panel" aria-labelledby="markets-table-heading">
-      <div className="panel-heading">
+    <Card className="markets-panel min-w-0" aria-labelledby="markets-table-heading">
+      <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0 border-b border-border pb-3">
         <div>
-          <p className="eyebrow">Active Markets</p>
-          <h2 id="markets-table-heading">Book monitor</h2>
+          <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-chart-info">
+            Active Markets
+          </p>
+          <h2 id="markets-table-heading" className="m-0 text-[17px] font-semibold leading-[1.2]">
+            Book monitor
+          </h2>
         </div>
-        <span className="feed-status">{orderedMarkets.length} markets</span>
-      </div>
+        <Badge variant="outline" className="rounded-full border-border bg-[#0c1118] text-[#b9c4d5]">
+          {orderedMarkets.length} markets
+        </Badge>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="table-scroll">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className="min-w-[200px] text-muted-foreground">Market</TableHead>
+                <TableHead className="min-w-[130px] text-muted-foreground">Primary probability</TableHead>
+                <TableHead className="min-w-[60px] text-muted-foreground">5m</TableHead>
+                <TableHead className="min-w-[60px] text-muted-foreground">15m</TableHead>
+                <TableHead className="min-w-[80px] text-muted-foreground">Spread</TableHead>
+                <TableHead className="min-w-[80px] text-muted-foreground">Depth</TableHead>
+                <TableHead className="min-w-[120px] text-muted-foreground">Expiry</TableHead>
+                <TableHead className="min-w-[75px] text-muted-foreground">Status</TableHead>
+                <TableHead className="min-w-[55px] text-muted-foreground">Watchlist</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {orderedMarkets.map((market) => {
+                if (market.kind === "bucket") {
+                  return (
+                    <TableRow key={market.id} className="border-border hover:bg-accent/5">
+                      <TableHead scope="row" className="h-auto py-3.5 font-normal">
+                        <Link
+                          className="block text-[13px] font-semibold text-foreground hover:text-primary"
+                          href={`/markets/${market.id}`}
+                        >
+                          <span className="block">{market.name}</span>
+                          <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] font-normal text-muted-foreground">
+                            {market.legs.map((leg) => (
+                              <li key={leg.outcomeId}>
+                                {leg.label} <strong className="text-foreground">{formatLegPercent(leg.probability)}</strong>
+                              </li>
+                            ))}
+                          </ul>
+                        </Link>
+                      </TableHead>
+                      <TableCell className="font-bold text-foreground">Multi</TableCell>
+                      <TableCell className="text-chart-positive">-</TableCell>
+                      <TableCell className="text-chart-positive">-</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell>{formatExpiry(market.expiryTime)}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={cn("text-[8px] font-black uppercase tracking-[0.07em]", statusClass[market.status])}>
+                          {market.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <WatchlistStar marketId={market.id} marketName={market.name} />
+                      </TableCell>
+                    </TableRow>
+                  );
+                }
 
-      <div className="table-scroll">
-        <table className="markets-table">
-          <thead>
-            <tr>
-              <th scope="col">Market</th>
-              <th scope="col">Primary probability</th>
-              <th scope="col">5m</th>
-              <th scope="col">15m</th>
-              <th scope="col">Spread</th>
-              <th scope="col">Depth</th>
-              <th scope="col">Expiry</th>
-              <th scope="col">Status</th>
-              <th scope="col">Watchlist</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orderedMarkets.map((market) => {
-              if (market.kind === "bucket") {
+                const snapshot = latestSnapshots.get(market.id);
+                const fiveMinuteDelta = eventDelta(events, market.id, 300);
+                const fifteenMinuteDelta = eventDelta(events, market.id, 900);
+
                 return (
-                  <tr key={market.id}>
-                    <th scope="row">
-                      <Link className="market-link" href={`/markets/${market.id}`}>
-                        <span>{market.name}</span>
-                        <ul className="bucket-legs">
-                          {market.legs.map((leg) => (
-                            <li key={leg.outcomeId}>
-                              {leg.label} <strong>{formatLegPercent(leg.probability)}</strong>
-                            </li>
-                          ))}
-                        </ul>
+                  <TableRow key={market.id} className="border-border hover:bg-accent/5">
+                    <TableHead scope="row" className="font-normal">
+                      <Link
+                        className="block text-[13px] font-semibold text-foreground hover:text-primary"
+                        href={`/markets/${market.id}`}
+                      >
+                        <span className="block">{market.name}</span>
+                        <small className="font-normal text-muted-foreground">
+                          {market.sides[market.primarySide].label} / {market.sides[market.dualSide].label}
+                        </small>
                       </Link>
-                    </th>
-                    <td className="metric-strong">Multi</td>
-                    <td className="metric-up">-</td>
-                    <td className="metric-up">-</td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td>{formatExpiry(market.expiryTime)}</td>
-                    <td>
-                      <span className={`status-pill status-${market.status}`}>{market.status}</span>
-                    </td>
-                    <td>
+                    </TableHead>
+                    <TableCell className="font-bold text-foreground">
+                      {formatProbability(snapshot?.primaryMid ?? null)}
+                    </TableCell>
+                    <TableCell className={fiveMinuteDelta != null && fiveMinuteDelta < 0 ? "text-chart-negative" : "text-chart-positive"}>
+                      {formatPoints(fiveMinuteDelta)}
+                    </TableCell>
+                    <TableCell className={fifteenMinuteDelta != null && fifteenMinuteDelta < 0 ? "text-chart-negative" : "text-chart-positive"}>
+                      {formatPoints(fifteenMinuteDelta)}
+                    </TableCell>
+                    <TableCell>{snapshot?.canonicalSpread == null ? "-" : formatPoints(snapshot.canonicalSpread * 100)}</TableCell>
+                    <TableCell>{compactCurrency(snapshot?.totalDepthThreePoints)}</TableCell>
+                    <TableCell>{formatExpiry(market.expiryTime)}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={cn("text-[8px] font-black uppercase tracking-[0.07em]", statusClass[market.status])}>
+                        {market.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
                       <WatchlistStar marketId={market.id} marketName={market.name} />
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
-              }
-
-              const snapshot = latestSnapshots.get(market.id);
-              const fiveMinuteDelta = eventDelta(events, market.id, 300);
-              const fifteenMinuteDelta = eventDelta(events, market.id, 900);
-
-              return (
-                <tr key={market.id}>
-                  <th scope="row">
-                    <Link className="market-link" href={`/markets/${market.id}`}>
-                      <span>{market.name}</span>
-                      <small>{market.sides[market.primarySide].label} / {market.sides[market.dualSide].label}</small>
-                    </Link>
-                  </th>
-                  <td className="metric-strong">{formatProbability(snapshot?.primaryMid ?? null)}</td>
-                  <td className={fiveMinuteDelta != null && fiveMinuteDelta < 0 ? "metric-down" : "metric-up"}>
-                    {formatPoints(fiveMinuteDelta)}
-                  </td>
-                  <td className={fifteenMinuteDelta != null && fifteenMinuteDelta < 0 ? "metric-down" : "metric-up"}>
-                    {formatPoints(fifteenMinuteDelta)}
-                  </td>
-                  <td>{snapshot?.canonicalSpread == null ? "-" : formatPoints(snapshot.canonicalSpread * 100)}</td>
-                  <td>{compactCurrency(snapshot?.totalDepthThreePoints)}</td>
-                  <td>{formatExpiry(market.expiryTime)}</td>
-                  <td>
-                    <span className={`status-pill status-${market.status}`}>{market.status}</span>
-                  </td>
-                  <td>
-                    <WatchlistStar marketId={market.id} marketName={market.name} />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </section>
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

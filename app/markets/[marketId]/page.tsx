@@ -4,6 +4,7 @@ import { MarketDetailLive } from "@/components/markets/market-detail-live";
 import { SWRProvider } from "@/components/providers/swr-provider";
 import { getMarketDataProvider } from "@/lib/hyperliquid/provider";
 import { marketDetailKey } from "@/lib/swr/types";
+import { Card } from "@/components/ui/card";
 
 type MarketPageProps = {
   params: Promise<{ marketId: string }>;
@@ -15,9 +16,19 @@ function isNotFoundError(error: unknown): boolean {
   return typeof error === "object" && error !== null && (error as { digest?: string }).digest === "NEXT_NOT_FOUND";
 }
 
-function sourceLabel(source: string): string {
-  if (source === "live") return "Source: live Hyperliquid";
-  return "Source: fixture tape";
+function SourcePill({ source }: { source: string }) {
+  const isLive = source === "live";
+  return (
+    <>
+      {isLive && (
+        <span className="relative flex size-2 shrink-0">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-chart-positive opacity-75" />
+          <span className="relative inline-flex size-2 rounded-full bg-chart-positive" />
+        </span>
+      )}
+      {isLive ? "live Hyperliquid" : "fixture tape"}
+    </>
+  );
 }
 
 export default async function MarketPage({ params }: MarketPageProps) {
@@ -40,10 +51,14 @@ export default async function MarketPage({ params }: MarketPageProps) {
     if (isNotFoundError(error)) throw error;
     return (
       <AppShell>
-        <section className="panel empty-state" aria-labelledby="market-unavailable-heading">
-          <h1 id="market-unavailable-heading">Live data unavailable</h1>
-          <span>We could not reach Hyperliquid right now. Try again shortly.</span>
-        </section>
+        <Card className="px-6 py-8" aria-labelledby="market-unavailable-heading">
+          <h1 id="market-unavailable-heading" className="m-0 text-[28px] font-bold leading-[1.15]">
+            Live data unavailable
+          </h1>
+          <span className="mt-2 block text-sm text-muted-foreground">
+            We could not reach Hyperliquid right now. Try again shortly.
+          </span>
+        </Card>
       </AppShell>
     );
   }
@@ -55,7 +70,7 @@ export default async function MarketPage({ params }: MarketPageProps) {
           [marketDetailKey(market.id)]: { source: provider.source, market, snapshots, events }
         }}
       >
-        <MarketDetailLive market={market} snapshots={snapshots} events={events} sourceLabel={sourceLabel(provider.source)} />
+        <MarketDetailLive market={market} snapshots={snapshots} events={events} sourceLabel={<SourcePill source={provider.source} />} />
       </SWRProvider>
     </AppShell>
   );

@@ -41,21 +41,18 @@ export function ProbabilityChart({ snapshots }: ProbabilityChartProps) {
       layout: {
         background: { type: ColorType.Solid, color: "#0b0f15" },
         textColor: "#8f9bad",
-        fontFamily: "Arial, Helvetica, sans-serif"
+        fontFamily: "Inter, -apple-system, system-ui, sans-serif"
       },
       grid: {
         horzLines: { color: "#1c2633" },
         vertLines: { color: "#1c2633" }
       },
       rightPriceScale: {
-        borderColor: "#263140",
-        scaleMargins: {
-          top: 0.12,
-          bottom: 0.1
-        }
+        borderColor: "#131e28",
+        scaleMargins: { top: 0.12, bottom: 0.1 }
       },
       timeScale: {
-        borderColor: "#263140",
+        borderColor: "#131e28",
         timeVisible: true,
         secondsVisible: false
       },
@@ -86,18 +83,22 @@ export function ProbabilityChart({ snapshots }: ProbabilityChartProps) {
 
   if (data.length === 0) {
     return (
-      <div className="chart-empty">
-        <p>No probability history</p>
-        <span>Snapshots have not published a primary mid yet.</span>
-        <small>Charts by TradingView</small>
+      <div className="grid min-h-[188px] content-center gap-1 px-[18px] py-[18px] text-muted-foreground">
+        <p className="m-0 text-[13px] font-black text-foreground">No probability history</p>
+        <span className="text-xs">Snapshots have not published a primary mid yet.</span>
+        <small className="text-xs">Charts by TradingView</small>
       </div>
     );
   }
 
   return (
-    <div className="probability-chart">
-      <div ref={containerRef} className="probability-chart-canvas" aria-label="Primary-side probability history" />
-      <div className="chart-footer">
+    <div className="px-3 pb-2 pt-3">
+      <div
+        ref={containerRef}
+        className="min-h-[260px] overflow-hidden rounded-md border border-border bg-[#0b0f15]"
+        aria-label="Primary-side probability history"
+      />
+      <div className="mt-1.5 flex justify-between text-[11px] text-[#778397]">
         <span>{data.length} snapshots</span>
         <span>Charts by TradingView</span>
       </div>

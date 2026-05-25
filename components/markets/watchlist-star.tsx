@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Star } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   readWatchlistFromStorage,
   toggleMarketInWatchlist,
@@ -56,7 +57,11 @@ export function WatchlistStar({ marketId, marketName }: WatchlistStarProps) {
   return (
     <button
       type="button"
-      className={`watchlist-star ${isStarred ? "is-starred" : ""}`}
+      className={cn(
+        "inline-flex h-7 w-7 items-center justify-center rounded transition-colors",
+        "text-muted-foreground hover:bg-accent/20 hover:text-foreground",
+        isStarred && "text-chart-warning hover:text-chart-warning"
+      )}
       onClick={toggleStar}
       aria-label={`${isStarred ? "Remove" : "Add"} ${marketName} ${isStarred ? "from" : "to"} watchlist`}
       aria-pressed={isStarred}
