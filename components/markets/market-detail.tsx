@@ -431,9 +431,9 @@ function BinaryMarketDetail({ market, snapshots, events, sourceLabel }: BinaryMa
             icon={<Database size={17} aria-hidden="true" />}
           />
           <CardContent className="p-0">
-            <div className="table-scroll">
+            <div className="table-scroll max-h-[302px] overflow-y-auto">
               <Table>
-                <TableHeader>
+                <TableHeader className="sticky top-0 z-10 bg-card">
                   <TableRow className="border-border hover:bg-transparent">
                     <TableHead className="text-muted-foreground">Bid size</TableHead>
                     <TableHead className="text-muted-foreground">Bid probability</TableHead>
