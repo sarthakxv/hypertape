@@ -115,7 +115,7 @@ function buildCurrentSnapshot(
     recentVolume,
     recentTradeCount: null,
     underlyingSpot:
-      market.underlying != null && allMids[market.underlying] != null
+      market.underlying != null && Number.isFinite(Number(allMids[market.underlying]))
         ? Number(allMids[market.underlying])
         : null,
     lastBookUpdateAt: primaryBook.time,
