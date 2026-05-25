@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { MarketCard, MarketSnapshot, TapeEvent } from "@/lib/hyperliquid/types";
 import { formatPoints, formatProbability } from "@/lib/markets/probability";
+import { deriveTargetDelta, formatSignedDelta } from "@/lib/markets/target-delta";
 import { WatchlistStar } from "@/components/markets/watchlist-star";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -145,6 +146,10 @@ function BinaryMarketCard({
 }) {
   const fiveMin = eventDelta(events, market.id, 300);
   const fifteenMin = eventDelta(events, market.id, 900);
+  const targetDelta =
+    market.status === "active"
+      ? deriveTargetDelta(market.targetPrice, snapshot?.underlyingSpot ?? null)
+      : null;
 
   return (
     <article className="relative flex flex-col">
@@ -182,6 +187,27 @@ function BinaryMarketCard({
           </span>
           <span className="text-[11px] text-muted-foreground">primary</span>
         </div>
+
+        {/* Target / Current / Δ */}
+        {targetDelta && (
+          <div
+            className={cn(
+              "flex items-center gap-1.5 text-[11px] tabular-nums",
+              targetDelta.delta == null
+                ? "text-muted-foreground"
+                : targetDelta.delta >= 0
+                  ? "text-chart-positive"
+                  : "text-chart-negative"
+            )}
+          >
+            <span className="text-muted-foreground">
+              Tgt ${targetDelta.target.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+            </span>
+            {targetDelta.delta != null && (
+              <span>· {formatSignedDelta(targetDelta.delta, targetDelta.deltaPct)}</span>
+            )}
+          </div>
+        )}
 
         {/* Momentum deltas */}
         <div className="flex gap-5">
