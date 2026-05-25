@@ -111,6 +111,32 @@ describe("live market data provider", () => {
     expect(current.lastBookUpdateAt).toBe((l2book800 as L2Book).time);
   });
 
+  test("current snapshot carries the underlying spot from allMids", async () => {
+    const provider = createProvider();
+    const snapshots = await provider.getSnapshots("80");
+    const current = snapshots[snapshots.length - 1];
+    expect(current.underlyingSpot).toBe(77114.5);
+
+    // Candle history points do not carry an underlying spot.
+    const historyPoints = snapshots.slice(0, candle8001m.length);
+    for (const point of historyPoints) {
+      expect(point.underlyingSpot).toBeNull();
+    }
+  });
+
+  test("current snapshot underlyingSpot is null when the underlying key is absent", async () => {
+    const provider = createProvider({
+      async fetchAllMids(): Promise<AllMids> {
+        const { BTC, ...withoutBtc } = allMids as AllMids & { BTC?: string };
+        void BTC;
+        return withoutBtc as AllMids;
+      }
+    });
+    const snapshots = await provider.getSnapshots("80");
+    const current = snapshots[snapshots.length - 1];
+    expect(current.underlyingSpot).toBeNull();
+  });
+
   test("getSnapshots() returns one current snapshot per binary market without throwing", async () => {
     const provider = createProvider();
     const markets = await provider.getMarkets();
