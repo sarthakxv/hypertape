@@ -11,6 +11,7 @@ import type {
   TapeEvent
 } from "@/lib/hyperliquid/types";
 import { formatPoints, formatProbability } from "@/lib/markets/probability";
+import { deriveTargetDelta, formatSignedDelta } from "@/lib/markets/target-delta";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -248,6 +249,10 @@ function BucketMarketDetail({
 
 function BinaryMarketDetail({ market, snapshots, events, sourceLabel }: BinaryMarketDetailProps) {
   const latest = latestSnapshot(snapshots);
+  const targetDelta =
+    market.status === "active"
+      ? deriveTargetDelta(market.targetPrice, latest?.underlyingSpot ?? null)
+      : null;
   const primaryLabel = sideLabel(market, market.primarySide);
   const dualLabel = sideLabel(market, market.dualSide);
   const depthBands: DepthBand[] = [
@@ -318,6 +323,47 @@ function BinaryMarketDetail({ market, snapshots, events, sourceLabel }: BinaryMa
           {sourceLabel}
         </span>
       </section>
+
+      {targetDelta && (
+        <section
+          className="mb-3.5 grid grid-cols-3 gap-2.5"
+          aria-label="Target versus current spot"
+        >
+          <article className="min-w-0 rounded-md border border-border bg-[#0d1219] p-3">
+            <span className="block text-[11px] font-bold uppercase tracking-[0.08em] text-[#7f8b9e]">
+              Target
+            </span>
+            <strong className="mt-2 block text-[22px] font-bold tabular-nums text-foreground">
+              {fullCurrency(targetDelta.target)}
+            </strong>
+          </article>
+          <article className="min-w-0 rounded-md border border-border bg-[#0d1219] p-3">
+            <span className="block text-[11px] font-bold uppercase tracking-[0.08em] text-[#7f8b9e]">
+              Current
+            </span>
+            <strong className="mt-2 block text-[22px] font-bold tabular-nums text-foreground">
+              {fullCurrency(targetDelta.current)}
+            </strong>
+          </article>
+          <article className="min-w-0 rounded-md border border-border bg-[#0d1219] p-3">
+            <span className="block text-[11px] font-bold uppercase tracking-[0.08em] text-[#7f8b9e]">
+              Δ
+            </span>
+            <strong
+              className={cn(
+                "mt-2 block text-[22px] font-bold tabular-nums",
+                targetDelta.delta == null
+                  ? "text-muted-foreground"
+                  : targetDelta.delta >= 0
+                    ? "text-chart-positive"
+                    : "text-chart-negative"
+              )}
+            >
+              {formatSignedDelta(targetDelta.delta, targetDelta.deltaPct)}
+            </strong>
+          </article>
+        </section>
+      )}
 
       {/* Stat tiles */}
       <section
