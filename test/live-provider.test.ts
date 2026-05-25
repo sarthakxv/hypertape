@@ -140,12 +140,15 @@ describe("live market data provider", () => {
   test("getSnapshots() returns one current snapshot per binary market without throwing", async () => {
     const provider = createProvider();
     const markets = await provider.getMarkets();
-    const binaryCount = markets.filter((market) => market.kind === "binary").length;
+    const binaryIds = new Set(
+      markets.filter((market) => market.kind === "binary").map((market) => market.id)
+    );
     const snapshots = await provider.getSnapshots();
 
-    expect(snapshots).toHaveLength(binaryCount);
-    const marketIds = new Set(snapshots.map((snapshot) => snapshot.marketId));
-    expect(marketIds.size).toBe(binaryCount);
+    // getSnapshots() also emits bucket volume snapshots; isolate the binary ones.
+    const binarySnapshots = snapshots.filter((snapshot) => binaryIds.has(snapshot.marketId));
+    expect(binarySnapshots).toHaveLength(binaryIds.size);
+    expect(new Set(binarySnapshots.map((snapshot) => snapshot.marketId)).size).toBe(binaryIds.size);
   });
 
   test("getSnapshots(bucketId) returns no snapshots", async () => {
@@ -166,11 +169,15 @@ describe("live market data provider", () => {
     });
 
     const markets = await provider.getMarkets();
-    const binaryCount = markets.filter((market) => market.kind === "binary").length;
+    const binaryIds = new Set(
+      markets.filter((market) => market.kind === "binary").map((market) => market.id)
+    );
 
     const snapshots = await provider.getSnapshots();
 
-    expect(snapshots).toHaveLength(binaryCount - 1);
+    // The rejected binary market is dropped; remaining binary snapshots survive.
+    const binarySnapshots = snapshots.filter((snapshot) => binaryIds.has(snapshot.marketId));
+    expect(binarySnapshots).toHaveLength(binaryIds.size - 1);
     expect(snapshots.some((snapshot) => snapshot.marketId === "80")).toBe(false);
   });
 
