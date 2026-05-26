@@ -8,6 +8,7 @@ import { getMarketDataProvider } from "@/lib/hyperliquid/provider";
 import { LIVE_KEY } from "@/lib/swr/types";
 import { formatPoints, formatProbability } from "@/lib/markets/probability";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -94,7 +95,12 @@ export default async function HomePage() {
               <span className="block overflow-hidden text-[13px] font-bold text-foreground/80 text-ellipsis whitespace-nowrap">
                 {market?.name ?? event.title}
               </span>
-              <strong className="mt-2 block text-[22px] font-bold text-chart-positive">
+              <strong
+                className={cn(
+                  "mt-2 block text-[22px] font-bold",
+                  event.delta != null && event.delta < 0 ? "text-chart-negative" : "text-chart-positive"
+                )}
+              >
                 {event.delta == null ? formatProbability(event.currentProbability ?? null) : formatPoints(event.delta * 100)}
               </strong>
               <small className="mt-1 line-clamp-2 block min-h-8 text-xs leading-[1.35] text-muted-foreground">

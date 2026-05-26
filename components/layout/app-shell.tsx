@@ -3,8 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Search } from "lucide-react";
+import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MarketSearch } from "@/components/layout/market-search";
 import { cn } from "@/lib/utils";
 
 type AppShellProps = {
@@ -62,15 +63,7 @@ export function AppShell({ children }: AppShellProps) {
           </Link>
         </nav>
 
-        <label className="flex min-w-40 flex-1 cursor-not-allowed items-center gap-2 rounded-lg border border-border bg-[#0b0f15] px-3 py-2.5 text-muted-foreground opacity-[0.72] sm:min-w-[220px]">
-          <Search size={16} aria-hidden="true" />
-          <span className="sr-only">Search HIP-4 markets</span>
-          <input
-            className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-[#6f7b8e] disabled:cursor-not-allowed"
-            placeholder="Search HIP-4 markets"
-            disabled
-          />
-        </label>
+        <MarketSearch />
 
         <Button type="button" disabled size="sm" className="shrink-0">
           <Bell size={16} aria-hidden="true" />

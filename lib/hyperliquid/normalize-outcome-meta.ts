@@ -5,7 +5,7 @@ import type {
   RawOutcomeMetaResponse,
   RawOutcomeQuestionEntry
 } from "./hyperliquid-client";
-import { bucketLegLabel, deriveMarketName } from "./market-naming";
+import { deriveMarketName, legLabel } from "./market-naming";
 import { parseOutcomeDescription } from "./parse-description";
 import type { BucketLeg, BucketMarket, MarketCard, Market, MarketStatus } from "./types";
 
@@ -58,7 +58,7 @@ export function normalizeOutcomeMeta(raw: RawOutcomeMetaEntry, now: number = Dat
     kind: "binary",
     id: String(outcome),
     outcomeId: outcome,
-    name: deriveMarketName(parsed, outcome),
+    name: deriveMarketName(parsed, outcome, raw.name),
     description: raw.description,
     underlying: parsed.underlying,
     targetPrice: parsed.targetPrice,
@@ -96,7 +96,7 @@ function buildBucketMarket(
     return {
       outcomeId,
       index,
-      label: bucketLegLabel(thresholds, index),
+      label: legLabel(thresholds, index, outcome?.name, outcomeId),
       yesCoin,
       probability: mid != null ? Number(mid) : null
     };
@@ -105,19 +105,23 @@ function buildBucketMarket(
   legs.sort((left, right) => left.index - right.index);
 
   const expiryTime = parsed.expiry;
-  const status = deriveStatus(expiryTime, now);
+  // A populated settledNamedOutcomes is the authoritative resolution signal — it takes
+  // precedence over the expiry heuristic, and it's the only way prose markets (which carry
+  // no parseable expiry) ever leave "active".
+  const isSettled = (question.settledNamedOutcomes ?? []).length > 0;
+  const status = isSettled ? "settled" : deriveStatus(expiryTime, now);
 
   return {
     kind: "bucket",
     id: `q${question.question}`,
     questionId: question.question,
-    name: deriveMarketName(parsed, question.question),
+    name: deriveMarketName(parsed, question.question, question.name),
     underlying: parsed.underlying,
     period: parsed.period,
     expiryTime,
     priceThresholds: parsed.priceThresholds,
     status,
-    statusSource: "expiry",
+    statusSource: isSettled ? "metadata" : "expiry",
     legs,
     raw: question,
     createdAt: now,
@@ -150,8 +154,12 @@ export function buildMarketsFromOutcomeMeta(
     .filter((outcome) => !namedIds.has(outcome.outcome) && !fallbackIds.has(outcome.outcome))
     .map((outcome) => normalizeOutcomeMeta(outcome, now));
 
+  // A question is structurally a multi-outcome bundle regardless of description format:
+  // pipe `class:priceBucket` and prose macro/event questions alike. Classifying by the
+  // presence of named outcomes (not the description string) keeps future market shapes
+  // working without special-casing.
   const bucketMarkets: BucketMarket[] = questions
-    .filter((question) => parseOutcomeDescription(question.description).class === "priceBucket")
+    .filter((question) => (question.namedOutcomes ?? []).length > 0)
     .map((question) => buildBucketMarket(question, outcomesById, allMids, now));
 
   return [...binaryMarkets, ...bucketMarkets];

@@ -114,6 +114,10 @@ function buildCurrentSnapshot(
     totalDepthFivePoints: fiveBand?.totalDepth ?? null,
     recentVolume,
     recentTradeCount: null,
+    underlyingSpot:
+      market.underlying != null && Number.isFinite(Number(allMids[market.underlying]))
+        ? Number(allMids[market.underlying])
+        : null,
     lastBookUpdateAt: primaryBook.time,
     lastTradeAt: null,
     bids,
@@ -148,6 +152,7 @@ function buildCandleSnapshot(market: Market, candle: Candle): MarketSnapshot {
     totalDepthFivePoints: null,
     recentVolume: null,
     recentTradeCount: null,
+    underlyingSpot: null,
     lastBookUpdateAt: null,
     lastTradeAt: null,
     bids: [],
@@ -226,6 +231,7 @@ export function createLiveMarketDataProvider(options: LiveProviderOptions = {}):
       totalDepthOnePoint: null, totalDepthThreePoints: null, totalDepthFivePoints: null,
       recentVolume: bucketMarketVolume(volMap, market),
       recentTradeCount: null,
+      underlyingSpot: null,
       lastBookUpdateAt: null, lastTradeAt: null,
       bids: [], asks: [],
     };

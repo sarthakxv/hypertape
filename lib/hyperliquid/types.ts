@@ -98,6 +98,7 @@ export type MarketSnapshot = {
   totalDepthFivePoints: number | null;
   recentVolume: number | null;
   recentTradeCount: number | null;
+  underlyingSpot: number | null;
   lastBookUpdateAt: number | null;
   lastTradeAt: number | null;
   bids: BookLevel[];

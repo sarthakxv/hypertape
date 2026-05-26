@@ -1,0 +1,92 @@
+{
+  "outcomes": [
+    {
+      "outcome": 95,
+      "name": "Recurring",
+      "description": "class:priceBinary|underlying:BTC|expiry:20260526-0600|targetPrice:77363|period:1d",
+      "sideSpecs": [{ "name": "Yes" }, { "name": "No" }],
+      "quoteToken": "USDC"
+    },
+    {
+      "outcome": 96,
+      "name": "Recurring Fallback",
+      "description": "other",
+      "sideSpecs": [{ "name": "Yes" }, { "name": "No" }],
+      "quoteToken": "USDC"
+    },
+    {
+      "outcome": 97,
+      "name": "Recurring Named Outcome",
+      "description": "index:0",
+      "sideSpecs": [{ "name": "Yes" }, { "name": "No" }],
+      "quoteToken": "USDC"
+    },
+    {
+      "outcome": 98,
+      "name": "Recurring Named Outcome",
+      "description": "index:1",
+      "sideSpecs": [{ "name": "Yes" }, { "name": "No" }],
+      "quoteToken": "USDC"
+    },
+    {
+      "outcome": 99,
+      "name": "Recurring Named Outcome",
+      "description": "index:2",
+      "sideSpecs": [{ "name": "Yes" }, { "name": "No" }],
+      "quoteToken": "USDC"
+    },
+    {
+      "outcome": 100,
+      "name": "Fallback",
+      "description": "",
+      "sideSpecs": [{ "name": "Yes" }, { "name": "No" }],
+      "quoteToken": "USDC"
+    },
+    {
+      "outcome": 101,
+      "name": "Below 4.3%",
+      "description": "This outcome resolves to Yes if the one-decimal BLS CPI year-over-year value for May 2026 is below 4.3%.",
+      "sideSpecs": [{ "name": "Yes" }, { "name": "No" }],
+      "quoteToken": "USDC"
+    },
+    {
+      "outcome": 102,
+      "name": "Exactly 4.3%",
+      "description": "This outcome resolves to Yes if the one-decimal BLS CPI year-over-year value for May 2026 is exactly 4.3%.",
+      "sideSpecs": [{ "name": "Yes" }, { "name": "No" }],
+      "quoteToken": "USDC"
+    },
+    {
+      "outcome": 103,
+      "name": "Above 4.3%",
+      "description": "This outcome resolves to Yes if the one-decimal BLS CPI year-over-year value for May 2026 is above 4.3%.",
+      "sideSpecs": [{ "name": "Yes" }, { "name": "No" }],
+      "quoteToken": "USDC"
+    },
+    {
+      "outcome": 104,
+      "name": "June Fed rate change",
+      "description": "The market resolves to Change if the upper bound of the target federal funds rate range in the FOMC statement for the June 16-17, 2026 meeting differs from the prior FOMC statement. Otherwise it resolves to No Change.",
+      "sideSpecs": [{ "name": "Change" }, { "name": "No Change" }],
+      "quoteToken": "USDC"
+    }
+  ],
+  "questions": [
+    {
+      "question": 18,
+      "name": "Recurring",
+      "description": "class:priceBucket|underlying:BTC|expiry:20260526-0600|priceThresholds:75815,78910|period:1d",
+      "fallbackOutcome": 96,
+      "namedOutcomes": [97, 98, 99],
+      "settledNamedOutcomes": []
+    },
+    {
+      "question": 19,
+      "name": "May CPI year-over-year",
+      "description": "The question resolves by assigning Yes to exactly one of Below 4.3%, Exactly 4.3%, or Above 4.3% based on the BLS Consumer Price Index news release for May 2026.",
+      "fallbackOutcome": 100,
+      "namedOutcomes": [101, 102, 103],
+      "settledNamedOutcomes": []
+    }
+  ]
+}

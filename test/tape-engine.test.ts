@@ -43,6 +43,7 @@ function snapshot(timestamp: number, mid: number | null): MarketSnapshot {
     totalDepthFivePoints: 8200,
     recentVolume: 9000,
     recentTradeCount: 14,
+    underlyingSpot: null,
     lastBookUpdateAt: timestamp,
     lastTradeAt: timestamp,
     bids: [],

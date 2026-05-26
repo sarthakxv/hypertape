@@ -27,6 +27,14 @@ export const fixtureOutcomeMeta: RawOutcomeMetaEntry[] = [
 
 const FIXTURE_NOW = Date.parse("2026-05-22T12:00:00.000Z");
 
+// Plausible underlying spot per fixture market (7=BTC, 8=HYPE, 9=SOL) so fixture
+// mode renders the Target/Current/Δ widget. targetPrices: 7→105000, 8→30, 9→180.
+const FIXTURE_UNDERLYING_SPOT: Record<string, number> = {
+  "7": 103500,
+  "8": 28.5,
+  "9": 192
+};
+
 function round(value: number): number {
   return Number(value.toFixed(4));
 }
@@ -81,6 +89,7 @@ function makeSnapshot(
     totalDepthFivePoints: depthFive?.totalDepth ?? null,
     recentVolume,
     recentTradeCount,
+    underlyingSpot: FIXTURE_UNDERLYING_SPOT[marketId] ?? null,
     lastBookUpdateAt: timestamp,
     lastTradeAt: timestamp - 20_000,
     bids,

@@ -11,6 +11,8 @@ import type {
   TapeEvent
 } from "@/lib/hyperliquid/types";
 import { formatPoints, formatProbability } from "@/lib/markets/probability";
+import { deriveTargetDelta, formatSignedDelta } from "@/lib/markets/target-delta";
+import { resolveMarketIcon } from "@/lib/markets/market-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -126,12 +128,6 @@ function bucketLegWidth(probability: number | null): string {
   return `${Math.max(0, Math.min(100, Math.round(probability * 100)))}%`;
 }
 
-function isBtc(underlying: string | undefined): boolean {
-  if (!underlying) return false;
-  const u = underlying.toLowerCase();
-  return u === "btc" || u === "bitcoin";
-}
-
 function PanelHeader({
   eyebrow,
   title,
@@ -165,6 +161,7 @@ function BucketMarketDetail({
   market: BucketMarket;
   sourceLabel: React.ReactNode;
 }) {
+  const icon = resolveMarketIcon(market);
   return (
     <>
       <section
@@ -177,10 +174,10 @@ function BucketMarketDetail({
                 Market Detail
               </p>
               <div className="inline-flex items-center gap-2.5">
-                {isBtc(market.underlying) && (
+                {icon && (
                   <Image
-                    src="/icons/bitcoin.png"
-                    alt="BTC"
+                    src={icon.src}
+                    alt={icon.alt}
                     width={40}
                     height={40}
                     className="mt-0 shrink-0 rounded-full"
@@ -193,9 +190,9 @@ function BucketMarketDetail({
           </div>
           <div className="mt-2.5 flex flex-wrap items-center gap-1.5" aria-label="Market metadata">
             {[
-              `Underlying ${market.underlying ?? "unknown"}`,
-              `Expiry ${formatExpiry(market.expiryTime)}`,
-            ].map((label) => (
+              market.underlying ? `Underlying ${market.underlying}` : null,
+              market.expiryTime ? `Expiry ${formatExpiry(market.expiryTime)}` : null,
+            ].filter(Boolean).map((label) => (
               <span
                 key={label}
                 className="inline-flex min-h-6 items-center rounded-md border border-border bg-[#0b0f15] px-1.5 py-1 text-xs text-[#b9c4d5]"
@@ -248,6 +245,10 @@ function BucketMarketDetail({
 
 function BinaryMarketDetail({ market, snapshots, events, sourceLabel }: BinaryMarketDetailProps) {
   const latest = latestSnapshot(snapshots);
+  const targetDelta =
+    market.status === "active"
+      ? deriveTargetDelta(market.targetPrice, latest?.underlyingSpot ?? null)
+      : null;
   const primaryLabel = sideLabel(market, market.primarySide);
   const dualLabel = sideLabel(market, market.dualSide);
   const depthBands: DepthBand[] = [
@@ -270,6 +271,7 @@ function BinaryMarketDetail({ market, snapshots, events, sourceLabel }: BinaryMa
       totalDepth: latest?.totalDepthFivePoints ?? null
     }
   ];
+  const icon = resolveMarketIcon(market);
 
   return (
     <>
@@ -283,10 +285,10 @@ function BinaryMarketDetail({ market, snapshots, events, sourceLabel }: BinaryMa
                 Market Detail
             </p>
             <div className="flex items-center gap-2.5">
-              {isBtc(market.underlying) && (
+              {icon && (
                 <Image
-                  src="/icons/bitcoin.png"
-                  alt="BTC"
+                  src={icon.src}
+                  alt={icon.alt}
                   width={40}
                   height={40}
                   className="mt-0.5 shrink-0 rounded-full"
@@ -300,7 +302,7 @@ function BinaryMarketDetail({ market, snapshots, events, sourceLabel }: BinaryMa
           <div className="mt-2.5 flex items-center flex-wrap gap-1.5" aria-label="Market metadata">
             {[
               market.quoteToken ? `Quote ${market.quoteToken}` : null,
-              `Expiry ${formatExpiry(market.expiryTime)}`,
+              market.expiryTime ? `Expiry ${formatExpiry(market.expiryTime)}` : null,
             ].filter(Boolean).map((label) => (
               <span
                 key={label}
@@ -318,6 +320,47 @@ function BinaryMarketDetail({ market, snapshots, events, sourceLabel }: BinaryMa
           {sourceLabel}
         </span>
       </section>
+
+      {targetDelta && (
+        <section
+          className="mb-3.5 grid grid-cols-3 gap-2.5"
+          aria-label="Target versus current spot"
+        >
+          <article className="min-w-0 rounded-md border border-border bg-[#0d1219] p-3">
+            <span className="block text-[11px] font-bold uppercase tracking-[0.08em] text-[#7f8b9e]">
+              Target
+            </span>
+            <strong className="mt-2 block text-[22px] font-bold tabular-nums text-foreground">
+              {fullCurrency(targetDelta.target)}
+            </strong>
+          </article>
+          <article className="min-w-0 rounded-md border border-border bg-[#0d1219] p-3">
+            <span className="block text-[11px] font-bold uppercase tracking-[0.08em] text-[#7f8b9e]">
+              Current
+            </span>
+            <strong className="mt-2 block text-[22px] font-bold tabular-nums text-foreground">
+              {fullCurrency(targetDelta.current)}
+            </strong>
+          </article>
+          <article className="min-w-0 rounded-md border border-border bg-[#0d1219] p-3">
+            <span className="block text-[11px] font-bold uppercase tracking-[0.08em] text-[#7f8b9e]">
+              Δ
+            </span>
+            <strong
+              className={cn(
+                "mt-2 block text-[22px] font-bold tabular-nums",
+                targetDelta.delta == null
+                  ? "text-muted-foreground"
+                  : targetDelta.delta >= 0
+                    ? "text-chart-positive"
+                    : "text-chart-negative"
+              )}
+            >
+              {formatSignedDelta(targetDelta.delta, targetDelta.deltaPct)}
+            </strong>
+          </article>
+        </section>
+      )}
 
       {/* Stat tiles */}
       <section
@@ -385,9 +428,9 @@ function BinaryMarketDetail({ market, snapshots, events, sourceLabel }: BinaryMa
             icon={<Database size={17} aria-hidden="true" />}
           />
           <CardContent className="p-0">
-            <div className="table-scroll">
+            <div className="table-scroll max-h-[302px] overflow-y-auto">
               <Table>
-                <TableHeader>
+                <TableHeader className="sticky top-0 z-10 bg-card">
                   <TableRow className="border-border hover:bg-transparent">
                     <TableHead className="text-muted-foreground">Bid size</TableHead>
                     <TableHead className="text-muted-foreground">Bid probability</TableHead>
