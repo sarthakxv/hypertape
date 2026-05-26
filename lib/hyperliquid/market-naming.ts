@@ -20,6 +20,21 @@ const USD_FORMAT = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0
 });
 
+// HIP-4 recurring crypto markets ship these as the `name` field instead of a real title;
+// the actual identity lives in the pipe-delimited description, so these must never surface.
+const TEMPLATE_NAMES = new Set([
+  "Recurring",
+  "Recurring Fallback",
+  "Recurring Named Outcome",
+  "Fallback"
+]);
+
+function meaningfulName(rawName?: string): string | undefined {
+  const trimmed = rawName?.trim();
+  if (!trimmed || TEMPLATE_NAMES.has(trimmed)) return undefined;
+  return trimmed;
+}
+
 /**
  * Maps a HIP-4 underlying symbol to a readable name. Unknown symbols pass through
  * unchanged; an undefined symbol becomes the generic "Outcome".
@@ -41,10 +56,16 @@ export function periodLabel(period?: string): string {
 /**
  * Derives a human market name from a parsed description. priceBinary markets read
  * "{Underlying} Up or Down {Period}"; priceBucket reads "{Underlying} Multi Outcomes
- * {Period}". Unknown or missing classes fall back to "{Underlying} {fallbackId}" so we
- * never surface the useless template label "Recurring".
+ * {Period}" — for these the API `name` is always the "Recurring*" template, so it is
+ * ignored. Otherwise (macro/event markets with prose descriptions) we prefer the raw
+ * `name` when it carries a real title, falling back to "{Underlying} {fallbackId}" so we
+ * never surface the useless template label.
  */
-export function deriveMarketName(parsed: ParsedOutcomeDescription, fallbackId: number): string {
+export function deriveMarketName(
+  parsed: ParsedOutcomeDescription,
+  fallbackId: number,
+  rawName?: string
+): string {
   const underlying = underlyingLabel(parsed.underlying);
   const period = periodLabel(parsed.period);
 
@@ -55,7 +76,7 @@ export function deriveMarketName(parsed: ParsedOutcomeDescription, fallbackId: n
     return `${underlying} Multi Outcomes ${period}`.trimEnd();
   }
 
-  return `${underlying} ${fallbackId}`;
+  return meaningfulName(rawName) ?? `${underlying} ${fallbackId}`;
 }
 
 /**
@@ -71,4 +92,22 @@ export function bucketLegLabel(thresholds: number[], index: number): string {
     return `> ${USD_FORMAT.format(thresholds[thresholds.length - 1])}`;
   }
   return `${USD_FORMAT.format(thresholds[index - 1])}–${USD_FORMAT.format(thresholds[index])}`;
+}
+
+/**
+ * Labels one leg of a multi-outcome bundle. Price-threshold bundles (pipe priceBucket)
+ * use the numeric range label; bundles without thresholds (prose questions like a CPI
+ * range) use the named outcome's own title, falling back to "Outcome {id}" when that
+ * title is missing or a "Recurring*" template.
+ */
+export function legLabel(
+  thresholds: number[],
+  index: number,
+  rawName: string | undefined,
+  outcomeId: number
+): string {
+  if (thresholds.length > 0) {
+    return bucketLegLabel(thresholds, index);
+  }
+  return meaningfulName(rawName) ?? `Outcome ${outcomeId}`;
 }

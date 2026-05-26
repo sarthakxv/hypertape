@@ -12,6 +12,7 @@ import type {
 } from "@/lib/hyperliquid/types";
 import { formatPoints, formatProbability } from "@/lib/markets/probability";
 import { deriveTargetDelta, formatSignedDelta } from "@/lib/markets/target-delta";
+import { resolveMarketIcon } from "@/lib/markets/market-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -127,12 +128,6 @@ function bucketLegWidth(probability: number | null): string {
   return `${Math.max(0, Math.min(100, Math.round(probability * 100)))}%`;
 }
 
-function isBtc(underlying: string | undefined): boolean {
-  if (!underlying) return false;
-  const u = underlying.toLowerCase();
-  return u === "btc" || u === "bitcoin";
-}
-
 function PanelHeader({
   eyebrow,
   title,
@@ -166,6 +161,7 @@ function BucketMarketDetail({
   market: BucketMarket;
   sourceLabel: React.ReactNode;
 }) {
+  const icon = resolveMarketIcon(market);
   return (
     <>
       <section
@@ -178,10 +174,10 @@ function BucketMarketDetail({
                 Market Detail
               </p>
               <div className="inline-flex items-center gap-2.5">
-                {isBtc(market.underlying) && (
+                {icon && (
                   <Image
-                    src="/icons/bitcoin.png"
-                    alt="BTC"
+                    src={icon.src}
+                    alt={icon.alt}
                     width={40}
                     height={40}
                     className="mt-0 shrink-0 rounded-full"
@@ -194,9 +190,9 @@ function BucketMarketDetail({
           </div>
           <div className="mt-2.5 flex flex-wrap items-center gap-1.5" aria-label="Market metadata">
             {[
-              `Underlying ${market.underlying ?? "unknown"}`,
-              `Expiry ${formatExpiry(market.expiryTime)}`,
-            ].map((label) => (
+              market.underlying ? `Underlying ${market.underlying}` : null,
+              market.expiryTime ? `Expiry ${formatExpiry(market.expiryTime)}` : null,
+            ].filter(Boolean).map((label) => (
               <span
                 key={label}
                 className="inline-flex min-h-6 items-center rounded-md border border-border bg-[#0b0f15] px-1.5 py-1 text-xs text-[#b9c4d5]"
@@ -275,6 +271,7 @@ function BinaryMarketDetail({ market, snapshots, events, sourceLabel }: BinaryMa
       totalDepth: latest?.totalDepthFivePoints ?? null
     }
   ];
+  const icon = resolveMarketIcon(market);
 
   return (
     <>
@@ -288,10 +285,10 @@ function BinaryMarketDetail({ market, snapshots, events, sourceLabel }: BinaryMa
                 Market Detail
             </p>
             <div className="flex items-center gap-2.5">
-              {isBtc(market.underlying) && (
+              {icon && (
                 <Image
-                  src="/icons/bitcoin.png"
-                  alt="BTC"
+                  src={icon.src}
+                  alt={icon.alt}
                   width={40}
                   height={40}
                   className="mt-0.5 shrink-0 rounded-full"
@@ -305,7 +302,7 @@ function BinaryMarketDetail({ market, snapshots, events, sourceLabel }: BinaryMa
           <div className="mt-2.5 flex items-center flex-wrap gap-1.5" aria-label="Market metadata">
             {[
               market.quoteToken ? `Quote ${market.quoteToken}` : null,
-              `Expiry ${formatExpiry(market.expiryTime)}`,
+              market.expiryTime ? `Expiry ${formatExpiry(market.expiryTime)}` : null,
             ].filter(Boolean).map((label) => (
               <span
                 key={label}

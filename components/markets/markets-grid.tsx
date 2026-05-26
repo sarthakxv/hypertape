@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { MarketCard, MarketSnapshot, TapeEvent } from "@/lib/hyperliquid/types";
 import { formatPoints, formatProbability } from "@/lib/markets/probability";
 import { deriveTargetDelta, formatSignedDelta } from "@/lib/markets/target-delta";
+import { resolveMarketIcon } from "@/lib/markets/market-icon";
 import { WatchlistStar } from "@/components/markets/watchlist-star";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -126,12 +127,6 @@ function LegBar({ label, probability }: { label: string; probability: number | n
   );
 }
 
-function isBtc(underlying: string | undefined): boolean {
-  if (!underlying) return false;
-  const u = underlying.toLowerCase();
-  return u === "btc" || u === "bitcoin";
-}
-
 const cardBase =
   "flex flex-1 flex-col gap-3.5 rounded-xl p-4 bg-card ring-1 ring-foreground/10 transition-all duration-200 hover:ring-primary/35 hover:shadow-[0_0_0_1px_hsl(var(--primary)/0.2),0_4px_20px_hsl(var(--primary)/0.06)]";
 
@@ -150,16 +145,17 @@ function BinaryMarketCard({
     market.status === "active"
       ? deriveTargetDelta(market.targetPrice, snapshot?.underlyingSpot ?? null)
       : null;
+  const icon = resolveMarketIcon(market);
 
   return (
     <article className="relative flex flex-col">
       <Link href={`/markets/${market.id}`} className={cardBase}>
         {/* Header */}
         <div className="flex min-h-0 gap-2.5 pr-8">
-          {isBtc(market.underlying) && (
+          {icon && (
             <Image
-              src="/icons/bitcoin.png"
-              alt="BTC"
+              src={icon.src}
+              alt={icon.alt}
               width={28}
               height={28}
               className="mt-0.5 shrink-0 rounded-full min-w-fit"
@@ -201,7 +197,7 @@ function BinaryMarketCard({
             )}
           >
             <span className="text-muted-foreground">
-              Tgt ${targetDelta.target.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+              Target ${targetDelta.target.toLocaleString("en-US", { maximumFractionDigits: 0 })}
             </span>
             {targetDelta.delta != null && (
               <span>· {formatSignedDelta(targetDelta.delta, targetDelta.deltaPct)}</span>
@@ -247,16 +243,17 @@ function BucketMarketCard({
     if (b.probability == null) return -1;
     return b.probability - a.probability;
   });
+  const icon = resolveMarketIcon(market);
 
   return (
     <article className="relative flex flex-col">
       <Link href={`/markets/${market.id}`} className={cardBase}>
         {/* Header */}
         <div className="flex min-h-0 gap-2.5 pr-8">
-          {isBtc(market.underlying) && (
+          {icon && (
             <Image
-              src="/icons/bitcoin.png"
-              alt="BTC"
+              src={icon.src}
+              alt={icon.alt}
               width={28}
               height={28}
               className="mt-0.5 shrink-0 rounded-full min-w-fit"
