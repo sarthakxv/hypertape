@@ -17,7 +17,7 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-10 flex min-h-17 flex-wrap items-center gap-3 border-b border-border bg-card/95 px-4 sm:gap-4 sm:px-6 backdrop-blur-sm">
-        <Link className="flex shrink-0 items-center gap-2.5" href="/" aria-label="Hypertape home">
+        <Link className="flex shrink-0 items-center gap-2.5" href="/app" aria-label="Hypertape home">
           <span className="flex size-8.5 items-center justify-center">
             <Image
               src="/assets/hypertape-logo.svg"

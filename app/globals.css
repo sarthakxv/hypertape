@@ -76,3 +76,54 @@
 .table-scroll {
   overflow-x: auto;
 }
+
+/* Landing page animated aurora background */
+@keyframes hypertapeAurora1 {
+  0%   { transform: translate3d(0%, 0%, 0) scale(1);      opacity: 0.95; }
+  25%  { transform: translate3d(8%, 6%, 0) scale(1.08);   opacity: 1; }
+  50%  { transform: translate3d(-4%, 12%, 0) scale(1.04); opacity: 0.85; }
+  75%  { transform: translate3d(-10%, 4%, 0) scale(1.10); opacity: 1; }
+  100% { transform: translate3d(0%, 0%, 0) scale(1);      opacity: 0.95; }
+}
+@keyframes hypertapeAurora2 {
+  0%   { transform: translate3d(0%, 0%, 0) scale(1);       opacity: 0.85; }
+  33%  { transform: translate3d(-12%, -8%, 0) scale(1.12); opacity: 1; }
+  66%  { transform: translate3d(8%, -4%, 0) scale(1.05);   opacity: 0.8; }
+  100% { transform: translate3d(0%, 0%, 0) scale(1);       opacity: 0.85; }
+}
+@keyframes hypertapeAurora3 {
+  0%   { transform: translate3d(0%, 0%, 0); opacity: 0.7; }
+  50%  { transform: translate3d(-6%, 8%, 0); opacity: 1; }
+  100% { transform: translate3d(0%, 0%, 0); opacity: 0.7; }
+}
+@keyframes hypertapeBreath {
+  0%, 100% { opacity: 0.85; }
+  50%      { opacity: 1; }
+}
+@keyframes hypertapeKenBurns {
+  0%   { transform: scale(1.04) translate3d(0, 0, 0); }
+  50%  { transform: scale(1.10) translate3d(-1.5%, -1%, 0); }
+  100% { transform: scale(1.04) translate3d(0, 0, 0); }
+}
+
+.hypertape-aurora {
+  position: absolute;
+  inset: -25%;
+  border-radius: 9999px;
+  will-change: transform, opacity;
+}
+.hypertape-aurora-1 { animation: hypertapeAurora1 24s ease-in-out infinite; }
+.hypertape-aurora-2 { animation: hypertapeAurora2 30s ease-in-out infinite; }
+.hypertape-aurora-3 { animation: hypertapeAurora3 18s ease-in-out infinite; }
+.hypertape-breath    { animation: hypertapeBreath 8s ease-in-out infinite; }
+.hypertape-hero-photo { animation: hypertapeKenBurns 60s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hypertape-aurora-1,
+  .hypertape-aurora-2,
+  .hypertape-aurora-3,
+  .hypertape-breath,
+  .hypertape-hero-photo {
+    animation: none;
+  }
+}
