@@ -31,6 +31,13 @@ describe("resolveMarketIcon", () => {
     });
   });
 
+  test("maps Champions League markets by name keyword (no underlying)", () => {
+    expect(resolveMarketIcon({ name: "Champions League Winner" })).toEqual({
+      src: "/icons/cpl_128.png",
+      alt: "Champions League"
+    });
+  });
+
   test("returns null for markets with no known icon", () => {
     expect(resolveMarketIcon({ name: "Ethereum Up or Down Daily", underlying: "ETH" })).toBeNull();
     expect(resolveMarketIcon({ name: "Some other event market" })).toBeNull();

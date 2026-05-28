@@ -22,6 +22,9 @@ export function resolveMarketIcon(market: { name: string; underlying?: string })
   if (name.includes("cpi")) {
     return { src: "/icons/cpi.png", alt: "CPI" };
   }
+  if (name.includes("champions league")) {
+    return { src: "/icons/cpl_128.png", alt: "Champions League" };
+  }
 
   return null;
 }
