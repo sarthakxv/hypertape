@@ -69,7 +69,11 @@ export default function LandingPage() {
       </div>
 
       {/* Top navigation */}
-      <header className="relative z-10 flex items-center justify-end px-5 py-5 sm:px-10 sm:py-7">
+      <header className="relative z-10 flex items-center justify-between px-5 py-5 sm:px-10 sm:py-7">
+        <Link href="/" aria-label="Hypertape home" className="flex items-center gap-2.5">
+          <Image src="/assets/hypertape-logo.svg" alt="" width={28} height={28} priority />
+          {/*<Image src="/assets/logo-text.svg" alt="Hypertape" width={88} height={17} priority />*/}
+        </Link>
         <Link
           href="/app"
           className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-[transform,opacity] hover:-translate-y-0.5 hover:opacity-90"
@@ -91,7 +95,7 @@ export default function LandingPage() {
             width={584}
             height={113}
             priority
-            className="h-auto w-[clamp(207px,39.6vw,576px)]"
+            className="h-auto w-[clamp(275px,39.6vw,576px)] sm:w-[clamp(207px,39.6vw,576px)]"
           />
 
           <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
@@ -117,7 +121,7 @@ export default function LandingPage() {
           </div>
 
           <p className="mt-6 max-w-xl text-base leading-relaxed text-foreground/75 sm:text-lg">
-            The live probability tape for Hyperliquid outcome markets.<br />Discovery, analysis,
+            The live probability tape for Hyperliquid outcome markets. <br className="hidden sm:block" /> Discovery, analysis,
             and real-time odds; every spread, depth, and probability move on one surface.
           </p>
 
@@ -132,13 +136,26 @@ export default function LandingPage() {
 
         {/* Footer, bottom-right */}
         <div className="flex flex-row items-center gap-4 text-muted-foreground sm:flex-col sm:items-end sm:gap-2.5">
-          <a
-            href="mailto:sarthakvdev@gmail.com"
-            aria-label="Email"
-            className="transition-colors hover:text-foreground"
-          >
-            <Mail className="size-5" aria-hidden="true" />
-          </a>
+          <div className="flex items-center gap-3">
+            <a
+              href="https://x.com/0xsarthak"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="X (Twitter)"
+              className="transition-colors hover:text-foreground"
+            >
+              <svg className="size-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              </svg>
+            </a>
+            <a
+              href="mailto:sarthakvdev@gmail.com"
+              aria-label="Email"
+              className="transition-colors hover:text-foreground"
+            >
+              <Mail className="size-4" aria-hidden="true" />
+            </a>
+          </div>
           <span className="text-[12px] text-muted-foreground/70">
             &copy; {new Date().getFullYear()} Hypertape
           </span>
