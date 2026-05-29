@@ -58,7 +58,7 @@ export default function LandingPage() {
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse 80% 70% at 50% 50%, transparent 0%, rgba(0, 0, 0, 0.55) 100%)"
+              "radial-gradient(ellipse 90% 80% at 50% 50%, transparent 30%, rgba(0, 0, 0, 0.28) 100%)"
           }}
         />
         {/* Film-grain noise */}
@@ -69,15 +69,10 @@ export default function LandingPage() {
       </div>
 
       {/* Top navigation */}
-      <header className="relative z-10 flex items-center justify-between px-5 py-5 sm:px-10 sm:py-7">
-        <nav className="flex items-center gap-5 text-sm sm:gap-7" aria-label="Primary navigation">
-          <Link href="/" className="text-foreground/90 transition-colors hover:text-foreground">
-            Home
-          </Link>
-        </nav>
+      <header className="relative z-10 flex items-center justify-end px-5 py-5 sm:px-10 sm:py-7">
         <Link
           href="/app"
-          className="rounded-full bg-foreground px-5 py-2.5 text-sm font-semibold text-background transition-[transform,opacity] hover:-translate-y-0.5 hover:opacity-90"
+          className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-[transform,opacity] hover:-translate-y-0.5 hover:opacity-90"
         >
           Launch App
         </Link>
@@ -96,31 +91,39 @@ export default function LandingPage() {
             width={584}
             height={113}
             priority
-            className="h-auto w-[clamp(230px,44vw,640px)]"
+            className="h-auto w-[clamp(207px,39.6vw,576px)]"
           />
 
-          <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px] uppercase tracking-[0.1em] text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="size-1.5 rounded-full bg-primary" />
-              Powered by Hyperliquid
+          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
+            <span className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.1em] text-muted-foreground/90">
+              Powered by
+              <Image
+                src="/assets/hl-logo-white.svg"
+                alt="Hyperliquid"
+                width={90}
+                height={14}
+              />
             </span>
-            <span aria-hidden className="text-muted-foreground/40">
-              &middot;
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="size-1.5 rounded-full bg-chart-info" />
-              Charts by TradingView
+            <span aria-hidden className="text-muted-foreground/30">&middot;</span>
+            <span className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.1em] text-muted-foreground/90">
+              Charts by
+              <Image
+                src="/assets/tv-logo-white.svg"
+                alt="TradingView"
+                width={100}
+                height={17}
+              />
             </span>
           </div>
 
           <p className="mt-6 max-w-xl text-base leading-relaxed text-foreground/75 sm:text-lg">
-            The live probability tape for Hyperliquid outcome markets. Discovery, analysis,
-            and real-time odds — every spread, depth, and probability move on one surface.
+            The live probability tape for Hyperliquid outcome markets.<br />Discovery, analysis,
+            and real-time odds; every spread, depth, and probability move on one surface.
           </p>
 
           <Link
             href="/app"
-            className="mt-8 inline-flex items-center gap-2 rounded-full bg-primary px-7 py-3 text-base font-semibold text-primary-foreground shadow-[0_0_40px_-8px_rgba(80,210,193,0.5)] transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-[0_0_56px_-6px_rgba(80,210,193,0.65)]"
+            className="mt-8 inline-flex items-center gap-2 rounded-full bg-primary px-7 py-3 text-base font-medium text-primary-foreground shadow-[0_0_40px_-8px_rgba(80,210,193,0.5)] transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-[0_0_56px_-6px_rgba(80,210,193,0.65)]"
           >
             Launch App
             <span aria-hidden="true">&rarr;</span>
