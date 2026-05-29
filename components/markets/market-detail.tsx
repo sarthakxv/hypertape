@@ -294,7 +294,7 @@ function BinaryMarketDetail({ market, snapshots, events, sourceLabel }: BinaryMa
                   className="mt-0.5 shrink-0 rounded-full"
                 />
               )}
-                <h1 id="market-heading" className="m-0 text-[28px] font-medium tracking-wide leading-[1.15]">
+                <h1 id="market-heading" className="m-0 text-[28px] font-medium tracking-wide leading-[1.15] min-w-full">
                   {market.name}
                 </h1>
             </div>

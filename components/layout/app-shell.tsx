@@ -16,7 +16,7 @@ export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-10 flex min-h-17 flex-wrap items-center gap-3 border-b border-border bg-card/95 px-4 sm:gap-4 sm:px-6 backdrop-blur-sm">
+      <header className="sticky top-0 z-10 flex min-h-17 flex-wrap items-center gap-3 border-b border-border bg-card/95 px-4 py-3 sm:py-0 sm:gap-4 sm:px-6 backdrop-blur-sm">
         <Link className="flex shrink-0 items-center gap-2.5" href="/app" aria-label="Hypertape home">
           <span className="flex size-8.5 items-center justify-center">
             <Image
@@ -65,13 +65,13 @@ export function AppShell({ children }: AppShellProps) {
 
         <MarketSearch />
 
-        <Button type="button" disabled size="sm" className="shrink-0">
+        <Button type="button" disabled size="sm" className="py-5 rounded hidden shrink-0 sm:flex">
           <Bell size={16} aria-hidden="true" />
           Alert drafts
         </Button>
       </header>
 
-      <main className="mx-auto w-full max-w-[1680px] px-4 py-5 pb-9 sm:px-6 sm:py-[22px]">
+      <main className="mx-auto w-full max-w-420 px-4 py-5 pb-9 sm:px-6 sm:py-5.5">
         {children}
       </main>
     </div>
